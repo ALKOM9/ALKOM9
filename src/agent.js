@@ -99,8 +99,8 @@ class AIAgent {
 
         // בחר מודל לפי סוג הבקשה
         const model = imageData
-            ? 'llama-3.2-11b-vision-preview'   // מודל ויז'ן לתמונות
-            : 'llama-3.1-70b-versatile';        // מודל רגיל - תמיכה מלאה בכלים
+            ? 'llama-3.2-11b-vision-preview'
+            : 'llama-3.3-70b-versatile';
 
         // שלח לגרוק ועבד קריאות לכלים
         let response = await this.groq.chat.completions.create({
@@ -141,7 +141,7 @@ class AIAgent {
 
             // שלח שוב עם תוצאות הכלים
             response = await this.groq.chat.completions.create({
-                model: 'llama-3.1-70b-versatile',
+                model: 'llama-3.3-70b-versatile',
                 messages,
                 tools: TOOLS,
                 tool_choice: 'auto',

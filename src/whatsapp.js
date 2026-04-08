@@ -2,6 +2,8 @@ const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const { Jimp } = require('jimp');
 
 class WhatsAppClient {
     constructor(agent) {
@@ -204,20 +206,45 @@ class WhatsAppClient {
 פשוט כתוב לי מה אתה צריך!`;
     }
 
+    async optimizeImage(sourcePath) {
+        // חתוך וכוון לפרופיל וואצאפ: 500x500, פוקוס על הפנים
+        const tempPath = path.join(os.tmpdir(), 'aylin_profile_optimized.jpg');
+        const image = await Jimp.read(sourcePath);
+        const w = image.bitmap.width;
+        const h = image.bitmap.height;
+
+        // חתוך ריבוע עם פוקוס על הפנים (25% מהחלק העליון)
+        const size = Math.min(w, h);
+        const x = Math.floor((w - size) / 2);
+        const y = Math.floor(h * 0.03); // 3% מהחלק העליון - מוריד רק קצת
+
+        await image
+            .crop({ x, y, w: size, h: size })
+            .resize({ w: 500, h: 500 })
+            .quality(92)
+            .write(tempPath);
+
+        return tempPath;
+    }
+
     async setProfilePicture() {
         try {
-            // נסה קודם מקובץ מקומי profile.jpg
             const localPath = path.join(process.cwd(), 'profile.jpg');
-            let media;
+            let imagePath = null;
 
             if (fs.existsSync(localPath)) {
-                media = MessageMedia.fromFilePath(localPath);
-                console.log('   Profile picture: loaded from profile.jpg');
+                console.log('   Profile picture: processing profile.jpg...');
+                imagePath = await this.optimizeImage(localPath);
+            }
+
+            let media;
+            if (imagePath) {
+                media = MessageMedia.fromFilePath(imagePath);
+                console.log('   Profile picture: optimized to 500x500 ✅');
             } else if (process.env.PROFILE_PICTURE_URL) {
                 media = await MessageMedia.fromUrl(process.env.PROFILE_PICTURE_URL, { unsafeMime: true });
                 console.log('   Profile picture: loaded from URL');
             } else {
-                // תמונת ברירת מחדל - אישה מ-randomuser.me
                 const defaultUrl = 'https://randomuser.me/api/portraits/women/44.jpg';
                 media = await MessageMedia.fromUrl(defaultUrl, { unsafeMime: true });
                 console.log('   Profile picture: using default');
@@ -226,7 +253,6 @@ class WhatsAppClient {
             await this.client.setProfilePicture(media);
             console.log('   Profile picture: set successfully ✅');
         } catch (err) {
-            // לא נכשל אם התמונה לא הוגדרה
             console.log('   Profile picture: skipped (' + err.message + ')');
         }
     }
