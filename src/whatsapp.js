@@ -1,5 +1,7 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const fs = require('fs');
+const path = require('path');
 
 class WhatsAppClient {
     constructor(agent) {
@@ -47,18 +49,17 @@ class WhatsAppClient {
             console.error('❌ כשל באימות - נסה להריץ שוב');
         });
 
-        this.client.on('ready', () => {
+        this.client.on('ready', async () => {
             this.botId = this.client.info.wid._serialized;
-            const botName = process.env.BOT_NAME || 'עוזר AI';
-            console.log('\n✅ האייג\'נט מוכן ועובד!');
-            console.log(`💬 שם: ${botName}`);
-            console.log(`📱 מספר: ${this.client.info.wid.user}`);
-            if (this.respondInGroups) {
-                console.log('👥 מגיב: בשיחות פרטיות + קבוצות');
-            } else {
-                console.log('💬 מגיב: בשיחות פרטיות בלבד');
-            }
-            console.log('\nשלח הודעה בוואצאפ כדי להתחיל! 🚀\n');
+            const botName = process.env.BOT_NAME || 'AI Assistant';
+            console.log('\n✅ Bot is ready!');
+            console.log(`   Name: ${botName}`);
+            console.log(`   Number: ${this.client.info.wid.user}`);
+            console.log(`   Groups: ${this.respondInGroups ? 'Yes' : 'Private only'}`);
+            console.log('\nSend a WhatsApp message to start! 🚀\n');
+
+            // קביעת תמונת פרופיל אוטומטית
+            await this.setProfilePicture();
         });
 
         this.client.on('disconnected', (reason) => {
@@ -203,8 +204,35 @@ class WhatsAppClient {
 פשוט כתוב לי מה אתה צריך!`;
     }
 
+    async setProfilePicture() {
+        try {
+            // נסה קודם מקובץ מקומי profile.jpg
+            const localPath = path.join(process.cwd(), 'profile.jpg');
+            let media;
+
+            if (fs.existsSync(localPath)) {
+                media = MessageMedia.fromFilePath(localPath);
+                console.log('   Profile picture: loaded from profile.jpg');
+            } else if (process.env.PROFILE_PICTURE_URL) {
+                media = await MessageMedia.fromUrl(process.env.PROFILE_PICTURE_URL, { unsafeMime: true });
+                console.log('   Profile picture: loaded from URL');
+            } else {
+                // תמונת ברירת מחדל - אישה מ-randomuser.me
+                const defaultUrl = 'https://randomuser.me/api/portraits/women/44.jpg';
+                media = await MessageMedia.fromUrl(defaultUrl, { unsafeMime: true });
+                console.log('   Profile picture: using default');
+            }
+
+            await this.client.setProfilePicture(media);
+            console.log('   Profile picture: set successfully ✅');
+        } catch (err) {
+            // לא נכשל אם התמונה לא הוגדרה
+            console.log('   Profile picture: skipped (' + err.message + ')');
+        }
+    }
+
     async start() {
-        console.log('⏳ מאתחל... זה עשוי לקחת כמה שניות.\n');
+        console.log('Starting... this may take a few seconds.\n');
         await this.client.initialize();
     }
 }

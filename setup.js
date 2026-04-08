@@ -32,19 +32,21 @@ async function main() {
     }
 
     console.log('Welcome! Let\'s set up your WhatsApp AI bot.');
-    console.log('The bot uses Google Gemini - completely FREE!\n');
+    console.log('The bot uses Groq - completely FREE! (14,400 requests/day)\n');
 
     line('-');
-    console.log('Step 1: Get a FREE Google API Key');
+    console.log('Step 1: Get a FREE Groq API Key');
     line('-');
     console.log('');
-    console.log('1. Open in browser: https://aistudio.google.com/app/apikey');
-    console.log('2. Sign in with your Google account');
-    console.log('3. Click "Create API Key"');
-    console.log('4. Copy the key (looks like: AIzaSy...)');
+    console.log('1. Open in browser: https://console.groq.com');
+    console.log('2. Sign up / sign in (free)');
+    console.log('3. Go to "API Keys" -> "Create API Key"');
+    console.log('4. Copy the key (looks like: gsk_...)');
+    console.log('');
+    console.log('Free tier: 14,400 requests/day - very generous!');
     console.log('');
 
-    const apiKey = await ask('Paste your API key here: ');
+    const apiKey = await ask('Paste your Groq API key here: ');
 
     if (!apiKey?.trim() || apiKey.trim() === 'your_api_key_here') {
         console.log('\nNo API key entered. Setup cancelled.');
@@ -54,8 +56,8 @@ async function main() {
 
     const trimmedKey = apiKey.trim();
 
-    if (!trimmedKey.startsWith('AIza') || trimmedKey.length < 30) {
-        console.log('\nWARNING: The key does not look valid. Make sure you copied it correctly.');
+    if (trimmedKey.length < 20) {
+        console.log('\nWARNING: The key seems too short. Make sure you copied it correctly.');
         const cont = await ask('Continue anyway? (yes/no): ');
         if (!cont.toLowerCase().startsWith('y')) {
             rl.close();
@@ -75,7 +77,7 @@ async function main() {
     const respondInGroups = groupsInput?.trim().toLowerCase().startsWith('y');
 
     const envContent = `# WhatsApp AI Agent Settings
-GEMINI_API_KEY=${trimmedKey}
+GROQ_API_KEY=${trimmedKey}
 BOT_NAME=${botName}
 RESPOND_IN_GROUPS=${respondInGroups}
 `;
