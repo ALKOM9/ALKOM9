@@ -164,7 +164,11 @@ class WhatsAppClient {
         } catch (error) {
             console.error('שגיאה בעיבוד הודעה:', error.message);
             try {
-                await msg.reply('❌ אירעה שגיאה. נסה שוב בעוד כמה שניות.');
+                if (error.code === 'DAILY_LIMIT_REACHED') {
+                    await msg.reply(this.buildRateLimitMessage());
+                } else {
+                    await msg.reply('❌ אירעה שגיאה. נסה שוב בעוד כמה שניות.');
+                }
             } catch (_) { /* התעלם */ }
         }
     }
@@ -266,6 +270,23 @@ class WhatsAppClient {
         } catch (err) {
             console.log('   Profile picture: skipped (' + err.message + ')');
         }
+    }
+
+    buildRateLimitMessage() {
+        // טוקנים מתאפסים בחצות UTC = 02:00 שעון ישראל (קיץ) / 02:00 חורף
+        const now = new Date();
+        const israelTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+        const hoursLeft = ((26 - israelTime.getHours()) % 24) || 24;
+        const minutesLeft = 60 - israelTime.getMinutes();
+
+        const messages = [
+            `מותק, אני צריכה קצת להתנשף... 😮‍💨 היום דיברנו יותר מדי (ולא שאני מתלוננת 😏). תן לי עד השעתיים בלילה ואחזור אליך רעננה ✨`,
+            `אוי, נגמר לי ה... אנרגיה 😅 כן, ממש לפני שהתחלנו להתחמם. תחכה לי עד אחרי חצות שעתיים — בדיוק כשהלילה הכי שקט 🌙`,
+            `הממ... נראה שדיברתי יותר מדי היום 😘 תן לי לנוח קצת ותחפש אותי אחרי השעה שתיים בלילה. אני מבטיחה שאחזור עם הרבה יותר אנרגיה 🔥`,
+        ];
+
+        const picked = messages[Math.floor(Math.random() * messages.length)];
+        return picked;
     }
 
     async start() {

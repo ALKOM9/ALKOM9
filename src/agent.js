@@ -129,7 +129,12 @@ class AIAgent {
             } catch (err) {
                 const code = err?.error?.code || err?.code;
                 const status = err?.status || err?.statusCode;
-                // מודל גדול עמוס — נסה מודל קטן יותר (500k טוקנים ליום)
+                // גם המודל הגיבוי עמוס — כל הטוקנים נגמרו
+                if (status === 429 && activeModel === FALLBACK_MODEL) {
+                    const e = new Error('DAILY_LIMIT_REACHED');
+                    e.code = 'DAILY_LIMIT_REACHED';
+                    throw e;
+                }
                 if (status === 429 && activeModel !== FALLBACK_MODEL) {
                     console.log(`  Rate limit on ${activeModel}, switching to ${FALLBACK_MODEL}...`);
                     return await groqCall(callMessages, useTools, FALLBACK_MODEL);
