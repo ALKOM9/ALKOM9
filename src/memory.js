@@ -1,10 +1,46 @@
-/**
- * זיכרון שיחות - פורמט OpenAI/Groq
- */
+const fs = require('fs');
+const path = require('path');
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+const MEMORY_FILE = path.join(DATA_DIR, 'memory.json');
+
 class ConversationMemory {
-    constructor(maxTurns = 15) {
+    constructor(maxTurns = 60) {
         this.chats = new Map();
         this.maxTurns = maxTurns;
+        this.load();
+    }
+
+    load() {
+        try {
+            if (!fs.existsSync(DATA_DIR)) {
+                fs.mkdirSync(DATA_DIR, { recursive: true });
+            }
+            if (fs.existsSync(MEMORY_FILE)) {
+                const data = JSON.parse(fs.readFileSync(MEMORY_FILE, 'utf8'));
+                for (const [chatId, history] of Object.entries(data)) {
+                    this.chats.set(chatId, history);
+                }
+                console.log(`   Memory: loaded ${this.chats.size} conversations from disk`);
+            }
+        } catch (err) {
+            console.log('   Memory: starting fresh (' + err.message + ')');
+        }
+    }
+
+    save() {
+        try {
+            if (!fs.existsSync(DATA_DIR)) {
+                fs.mkdirSync(DATA_DIR, { recursive: true });
+            }
+            const data = {};
+            for (const [chatId, history] of this.chats.entries()) {
+                data[chatId] = history;
+            }
+            fs.writeFileSync(MEMORY_FILE, JSON.stringify(data), 'utf8');
+        } catch (err) {
+            console.error('Memory save error:', err.message);
+        }
     }
 
     getHistory(chatId) {
@@ -16,19 +52,17 @@ class ConversationMemory {
             this.chats.set(chatId, []);
         }
         const history = this.chats.get(chatId);
-
-        // פורמט OpenAI/Groq - content ולא parts
         history.push({ role: 'user', content: userText });
         history.push({ role: 'assistant', content: assistantText });
-
-        // שמור רק את הסיבובים האחרונים
         while (history.length > this.maxTurns * 2) {
             history.splice(0, 2);
         }
+        this.save();
     }
 
     clearHistory(chatId) {
         this.chats.delete(chatId);
+        this.save();
     }
 
     getStats() {
