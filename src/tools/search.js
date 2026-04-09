@@ -1,69 +1,104 @@
 /**
- * חיפוש ברשת - משתמש ב-DuckDuckGo (חינמי, ללא מפתח API)
+ * חיפוש ברשת - DuckDuckGo + Wikipedia (חינמי, ללא API key)
  */
 async function searchWeb(query) {
+    const results = await Promise.allSettled([
+        searchDuckDuckGo(query),
+        searchWikipedia(query)
+    ]);
+
+    const combined = [];
+
+    for (const r of results) {
+        if (r.status === 'fulfilled' && r.value) {
+            combined.push(r.value);
+        }
+    }
+
+    if (combined.length === 0) {
+        return `לא מצאתי תוצאות עבור "${query}".`;
+    }
+
+    return combined.join('\n\n---\n\n').slice(0, 2000);
+}
+
+async function searchDuckDuckGo(query) {
     try {
-        // DuckDuckGo Instant Answer API - חינמי וללא API key
         const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1&no_redirect=1`;
-
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; WhatsAppBot/1.0; +https://github.com/ai-agent)'
-            },
-            signal: AbortSignal.timeout(8000) // 8 שניות timeout
+        const res = await fetch(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+            signal: AbortSignal.timeout(7000)
         });
+        if (!res.ok) return null;
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
+        const data = await res.json();
+        const parts = [];
 
-        const data = await response.json();
-        const results = [];
-
-        // תשובה מיידית (חישובים, עובדות)
-        if (data.Answer) {
-            results.push(`תשובה: ${data.Answer}`);
-        }
-
-        // תיאור ראשי
+        if (data.Answer) parts.push(data.Answer);
         if (data.AbstractText) {
-            results.push(data.AbstractText);
-            if (data.AbstractSource) {
-                results.push(`(מקור: ${data.AbstractSource})`);
-            }
+            parts.push(data.AbstractText);
+            if (data.AbstractSource) parts.push(`מקור: ${data.AbstractSource}`);
         }
-
-        // הגדרה
         if (data.Definition && data.Definition !== data.AbstractText) {
-            results.push(`הגדרה: ${data.Definition}`);
+            parts.push(`הגדרה: ${data.Definition}`);
         }
-
-        // נושאים קשורים
         if (data.RelatedTopics?.length > 0) {
-            const relevant = data.RelatedTopics
-                .filter(t => t.Text && !t.Topics) // רק פריטים עם טקסט ישיר
-                .slice(0, 4)
+            const topics = data.RelatedTopics
+                .filter(t => t.Text && !t.Topics)
+                .slice(0, 3)
                 .map(t => `• ${t.Text}`);
-
-            if (relevant.length > 0) {
-                if (results.length > 0) results.push('');
-                results.push('מידע נוסף:');
-                results.push(...relevant);
-            }
+            if (topics.length > 0) parts.push(topics.join('\n'));
         }
 
-        if (results.length === 0) {
-            return `לא נמצא מידע ישיר עבור "${query}". ייתכן שמדובר בנושא עדכני מאוד או ספציפי מדי.`;
-        }
+        return parts.length > 0 ? parts.join('\n') : null;
+    } catch {
+        return null;
+    }
+}
 
-        return results.join('\n');
+async function searchWikipedia(query) {
+    try {
+        // נסה קודם בעברית, אחר כך באנגלית
+        const heResult = await fetchWikipedia(query, 'he');
+        if (heResult) return heResult;
+        return await fetchWikipedia(query, 'en');
+    } catch {
+        return null;
+    }
+}
 
-    } catch (error) {
-        if (error.name === 'TimeoutError') {
-            return 'החיפוש לקח יותר מדי זמן. נסה שוב.';
-        }
-        console.error('שגיאת חיפוש:', error.message);
-        return `לא הצלחתי לחפש עכשיו (${error.message}). תוכל לנסות שוב?`;
+async function fetchWikipedia(query, lang) {
+    try {
+        const searchUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&srlimit=2&origin=*`;
+        const searchRes = await fetch(searchUrl, {
+            headers: { 'User-Agent': 'WhatsAppBot/1.0' },
+            signal: AbortSignal.timeout(6000)
+        });
+        if (!searchRes.ok) return null;
+
+        const searchData = await searchRes.json();
+        const hits = searchData?.query?.search;
+        if (!hits || hits.length === 0) return null;
+
+        const pageId = hits[0].pageid;
+        const extractUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&pageids=${pageId}&format=json&origin=*`;
+        const extractRes = await fetch(extractUrl, {
+            headers: { 'User-Agent': 'WhatsAppBot/1.0' },
+            signal: AbortSignal.timeout(6000)
+        });
+        if (!extractRes.ok) return null;
+
+        const extractData = await extractRes.json();
+        const page = extractData?.query?.pages?.[pageId];
+        const extract = page?.extract?.trim();
+
+        if (!extract) return null;
+
+        // החזר רק 600 תווים ראשונים
+        const short = extract.length > 600 ? extract.slice(0, 600) + '...' : extract;
+        return `Wikipedia (${lang}): ${short}`;
+    } catch {
+        return null;
     }
 }
 

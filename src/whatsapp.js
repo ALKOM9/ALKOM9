@@ -116,6 +116,17 @@ class WhatsAppClient {
             let userMessage = body;
             let imageData = null;
 
+            // טיפול בציטוט הודעה (Reply)
+            if (msg.hasQuotedMsg) {
+                try {
+                    const quoted = await msg.getQuotedMessage();
+                    const quotedBody = quoted.body?.trim();
+                    if (quotedBody) {
+                        userMessage = `[מגיב על ההודעה: "${quotedBody.slice(0, 300)}"]\n${userMessage}`;
+                    }
+                } catch (_) {}
+            }
+
             // טיפול בתמונות
             if (msg.hasMedia) {
                 try {
