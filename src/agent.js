@@ -70,7 +70,17 @@ class AIAgent {
     async chat(chatId, userMessage, imageData = null) {
         await this.throttle(chatId);
 
-        const history = this.memory.getHistory(chatId);
+        const rawHistory = this.memory.getHistory(chatId);
+        // המרה אוטומטית מפורמט Gemini ישן (parts) לפורמט OpenAI (content)
+        const history = rawHistory.map(msg => {
+            if (msg.parts !== undefined) {
+                const text = Array.isArray(msg.parts)
+                    ? msg.parts.map(p => p.text || '').join('')
+                    : String(msg.parts);
+                return { role: msg.role === 'model' ? 'assistant' : msg.role, content: text };
+            }
+            return msg;
+        });
         const systemPrompt = this.buildSystemPrompt();
 
         // בניית רשימת ההודעות
