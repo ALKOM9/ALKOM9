@@ -173,8 +173,12 @@ class AIAgent {
             response = await groqCall(messages, true);
         }
 
-        const responseText = response.choices[0]?.message?.content?.trim()
-            || 'מצטער, לא הצלחתי ליצור תגובה. נסה שוב.';
+        const rawText = response.choices[0]?.message?.content?.trim() || '';
+        const responseText = rawText
+            .replace(/<function=[^>]*>[\s\S]*?<\/function>/g, '')
+            .replace(/<function=[^\s>]*\s*\{[\s\S]*?\}\s*>/g, '')
+            .replace(/<function=[^\s>]*>/g, '')
+            .trim() || 'מצטערת, משהו השתבש. נסי שוב';
 
         // שמור בזיכרון (פורמט פשוט לשמירה)
         this.memory.addMessage(chatId, userMessage || '[תמונה]', responseText);
