@@ -113,25 +113,34 @@ class AIAgent {
             : 'llama-3.3-70b-versatile';
 
         // helper: קריאה לגרוק עם fallback אם tool_use_failed
-        const groqCall = async (callMessages, useTools) => {
+        const FALLBACK_MODEL = 'llama-3.1-8b-instant';
+
+        const groqCall = async (callMessages, useTools, overrideModel) => {
+            const activeModel = overrideModel || model;
             try {
                 return await this.groq.chat.completions.create({
-                    model,
+                    model: activeModel,
                     messages: callMessages,
                     tools: useTools ? TOOLS : undefined,
                     tool_choice: useTools ? 'auto' : undefined,
-                    max_tokens: 2048,
+                    max_tokens: 1024,
                     temperature: 0.7
                 });
             } catch (err) {
                 const code = err?.error?.code || err?.code;
                 const status = err?.status || err?.statusCode;
+                // מודל גדול עמוס — נסה מודל קטן יותר (500k טוקנים ליום)
+                if (status === 429 && activeModel !== FALLBACK_MODEL) {
+                    console.log(`  Rate limit on ${activeModel}, switching to ${FALLBACK_MODEL}...`);
+                    return await groqCall(callMessages, useTools, FALLBACK_MODEL);
+                }
+                // tool call שגוי — נסה בלי כלים
                 if (useTools && (code === 'tool_use_failed' || status === 400)) {
-                    console.log('  ⚠️  Tool call failed, retrying without tools...');
+                    console.log('  Tool call failed, retrying without tools...');
                     return await this.groq.chat.completions.create({
-                        model,
+                        model: activeModel,
                         messages: callMessages,
-                        max_tokens: 2048,
+                        max_tokens: 1024,
                         temperature: 0.7
                     });
                 }
