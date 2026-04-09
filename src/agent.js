@@ -102,15 +102,35 @@ class AIAgent {
             ? 'llama-3.2-11b-vision-preview'
             : 'llama-3.3-70b-versatile';
 
+        // helper: קריאה לגרוק עם fallback אם tool_use_failed
+        const groqCall = async (callMessages, useTools) => {
+            try {
+                return await this.groq.chat.completions.create({
+                    model,
+                    messages: callMessages,
+                    tools: useTools ? TOOLS : undefined,
+                    tool_choice: useTools ? 'auto' : undefined,
+                    max_tokens: 2048,
+                    temperature: 0.7
+                });
+            } catch (err) {
+                const code = err?.error?.code || err?.code;
+                const status = err?.status || err?.statusCode;
+                if (useTools && (code === 'tool_use_failed' || status === 400)) {
+                    console.log('  ⚠️  Tool call failed, retrying without tools...');
+                    return await this.groq.chat.completions.create({
+                        model,
+                        messages: callMessages,
+                        max_tokens: 2048,
+                        temperature: 0.7
+                    });
+                }
+                throw err;
+            }
+        };
+
         // שלח לגרוק ועבד קריאות לכלים
-        let response = await this.groq.chat.completions.create({
-            model,
-            messages,
-            tools: imageData ? undefined : TOOLS, // כלים רק במצב טקסט
-            tool_choice: imageData ? undefined : 'auto',
-            max_tokens: 2048,
-            temperature: 0.7
-        });
+        let response = await groqCall(messages, !imageData);
 
         // לולאת אייג'נט - טפל בקריאות לכלים
         let iterations = 0;
@@ -140,14 +160,7 @@ class AIAgent {
             }
 
             // שלח שוב עם תוצאות הכלים
-            response = await this.groq.chat.completions.create({
-                model: 'llama-3.3-70b-versatile',
-                messages,
-                tools: TOOLS,
-                tool_choice: 'auto',
-                max_tokens: 2048,
-                temperature: 0.7
-            });
+            response = await groqCall(messages, true);
         }
 
         const responseText = response.choices[0]?.message?.content?.trim()
