@@ -4,9 +4,9 @@
 const OpenRouterProvider = require('../providers/openrouter');
 const router = require('../router/router');
 
-// Pattern selection thresholds
-const SINGLE_CONF_THRESHOLD = 0.6;   // confidence > this → Single model
-const PARALLEL_CONF_THRESHOLD = 0.3; // confidence < this → Parallel+Vote
+// Pattern selection thresholds — Single is default for WhatsApp speed
+const SINGLE_CONF_THRESHOLD = 0.4;   // confidence > this → Single model
+const PARALLEL_CONF_THRESHOLD = 0.1; // confidence < this → Parallel+Vote (rare)
 
 class Orchestrator {
     constructor() {

@@ -106,7 +106,7 @@ class AIAgent {
             return msg;
         });
 
-        const maxTokens = /פרט|הרחב|תסביר|כתוב|ארוך|מלא|תכתוב/.test(userMessage || '') ? 4096 : 1024;
+        const maxTokens = /פרט|הרחב|תסביר|כתוב|ארוך|מלא|תכתוב/.test(userMessage || '') ? 1500 : 500;
         const systemPrompt = this.buildSystemPrompt(chatId, prevSeen);
         const messages = [{ role: 'system', content: systemPrompt }, ...history];
 
@@ -209,7 +209,9 @@ class AIAgent {
 
         // Priority 2: Groq
         if (this.groq) {
-            const model = isImage ? 'llama-3.2-11b-vision-preview' : 'llama-3.3-70b-versatile';
+            // Use fast 8b model by default; only upgrade to 70b for complex/long requests
+            const needsPower = maxTokens > 800 || /נתח|השווה|כתוב חיבור|תרגם מסמך|ניתוח/.test(userMessage || '');
+            const model = isImage ? 'llama-3.2-11b-vision-preview' : needsPower ? 'llama-3.3-70b-versatile' : 'llama-3.1-8b-instant';
             const FALLBACK = 'llama-3.1-8b-instant';
 
             const groqCall = async (m) => {
