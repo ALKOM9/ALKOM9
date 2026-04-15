@@ -22,7 +22,9 @@ async function main() {
     else console.log('  Primary AI: Groq (fallback only mode)');
     console.log('='.repeat(55) + '\n');
 
-    const agent = new AIAgent(anthropicKey, groqKey);
+    const openrouterKey = process.env.OPENROUTER_API_KEY;
+    if (openrouterKey) console.log('  OpenRouter: enabled (intelligent routing active)');
+    const agent = new AIAgent(anthropicKey, groqKey, openrouterKey);
     const whatsapp = new WhatsAppClient(agent);
 
     // Reminder worker — check every 60 seconds

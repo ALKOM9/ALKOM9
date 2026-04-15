@@ -10,6 +10,12 @@ const { parseIsraeliTime, formatCountdown } = require('./tools/productivity');
 const { convertUnits, generatePassword, encodeDecodeBase64, convertNumber, convertColor, numberToRoman, validateIBAN, urlEncodeDecode, convertTimezone } = require('./tools/utils');
 const { getTrivia, getFortune, getSongGuess, getStoryNode, getDailyJoke } = require('./tools/games');
 const { getTechnicalAnalysis, getStockrowData } = require('./tools/technicals');
+const OpenRouterProvider = require('./providers/openrouter');
+const { classify: classifyTask } = require('./router/taskClassifier');
+const { select: routerSelect } = require('./router/router');
+const orchestrator = require('./orchestrator/orchestrator');
+const evaluator = require('./evaluation/evaluator');
+const learner = require('./learning/learner');
 
 const S = (d) => ({ type: 'string', description: d });
 const N = (d) => ({ type: 'number', description: d });
@@ -69,7 +75,7 @@ const TOOLS = [
 ];
 
 class AIAgent {
-    constructor(anthropicKey, groqKey) {
+    constructor(anthropicKey, groqKey, openrouterKey) {
         this.claude = anthropicKey ? new ClaudeProvider(anthropicKey) : null;
         this.groq = groqKey ? new Groq({ apiKey: groqKey }) : null;
         this.memory = new ConversationMemory();
@@ -77,6 +83,12 @@ class AIAgent {
         this.requestQueue = new Map();
         this.cache = new Map(); // {key: {result, exp}}
         this.usingFallback = false;
+        this.openrouter = openrouterKey ? new OpenRouterProvider(openrouterKey) : null;
+        // Inject provider into singletons
+        if (this.openrouter) {
+            orchestrator.setProvider(this.openrouter);
+            evaluator.setProvider(this.openrouter);
+        }
     }
 
     async chat(chatId, userMessage, imageData = null) {
@@ -106,7 +118,7 @@ class AIAgent {
             messages.push({ role: 'user', content: userMessage });
         }
 
-        let response = await this.callAI(messages, !imageData, maxTokens, !!imageData);
+        let response = await this.callAI(messages, !imageData, maxTokens, !!imageData, chatId, userMessage || '');
         let iterations = 0;
         while (response.choices[0].finish_reason === 'tool_calls' && iterations < 5) {
             iterations++;
@@ -120,7 +132,7 @@ class AIAgent {
                 console.log(`  ✅ ${String(result).slice(0,100)}`);
                 messages.push({ role: 'tool', tool_call_id: call.id, content: String(result) });
             }
-            response = await this.callAI(messages, true, maxTokens, false);
+            response = await this.callAI(messages, true, maxTokens, false, chatId, '');
         }
 
         const rawText = response.choices[0]?.message?.content?.trim() || '';
@@ -137,8 +149,39 @@ class AIAgent {
         return responseText;
     }
 
-    async callAI(messages, useTools, maxTokens, isImage) {
-        // Try Claude first (not for images — use Groq vision)
+    async callAI(messages, useTools, maxTokens, isImage, chatId = '', userMessage = '') {
+        // If OpenRouter is available, use intelligent routing
+        if (this.openrouter) {
+            try {
+                const task = classifyTask(userMessage, isImage);
+                const routing = routerSelect(task);
+                console.log(`  🧭 Route: ${routing.model.split('/')[1]} (${task.taskType}/${task.complexity}, conf=${routing.confidence}) — ${routing.reason}`);
+
+                const { response, modelsUsed, pattern, latencyMs, rawResp } = await orchestrator.execute(
+                    routing, messages, useTools ? TOOLS : [], maxTokens
+                );
+
+                // Async evaluation + learning (non-blocking)
+                if (response) {
+                    evaluator.scoreAsync(response, messages, task, routing, latencyMs)
+                        .then(evalResult => {
+                            if (evalResult) learner.update(routing.model, task.taskType, evalResult, latencyMs);
+                        })
+                        .catch(() => {}); // Silent failure
+                }
+
+                // If orchestrator returned a raw OpenAI-compatible response (single model), return it
+                // Otherwise wrap the text response
+                if (rawResp?.choices) return rawResp;
+                return { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: response, tool_calls: undefined } }] };
+            } catch (err) {
+                console.warn('  OpenRouter routing failed, falling back to Claude/Groq:', err.message);
+                this.usingFallback = true;
+                // Fall through to Claude/Groq fallback below
+            }
+        }
+
+        // Existing fallback: Try Claude first (not for images)
         if (this.claude && !isImage) {
             try {
                 const resp = await this.claude.call(messages, useTools ? TOOLS : [], { maxTokens });
@@ -319,10 +362,16 @@ ${fallbackNote}
 - שנאות: ריבה מיותרת, אנשים מתחסדים, הכללות שטחיות
 - למידה עצמית: בכל שיחה לומדת יותר על המשתמש, זוכרת ומחזירה בטבעיות
 
-שפה:
-- עברית: מרחוב ("וואלה","תכלס","סבבה","חחחח","יאלה","על הפנים") ועד ספרותית-גבוהה
-- טורקית: מ-lan/aga/kanka ועד רשמית — עונה בטורקית אם כותבים אליה בטורקית
-- ערבית, אנגלית, רוסית, ספרדית, צרפתית — כל הרמות בכל שפה
+שפה — כלל קריטי:
+- את מזהה אוטומטית את רמת השפה של המשתמש ומתאימה את עצמך:
+  * לשון רחוב/נוער: "וואלה", "תכלס", "סבבה", "אחי", "מה קורה", "חחחח", "בול", "נס", "פדיחה", "מפגר" — ענה כך בחזרה
+  * לשון יומיומית/נורמלית: עברית שוטפת טבעית, לא פורמלית אבל לא סלנג קיצוני
+  * לשון רשמית/עסקית: "אודה לך", "בהתאם ל...", "לצורך הבהרה", ניסוח בוגר ומכובד
+  * לשון משפטית/דיפלומטית: "בהתאם להוראות", "הסכמה מדעת", "בכפוף ל...", "מבלי לגרוע מ...", ניסוח מדויק ומחייב
+- באנגלית: מרחוב (gonna, wanna, ngl, tbh, lol, bruh) ועד academic/formal (pursuant to, heretofore, notwithstanding)
+- בטורקית: מרחוב (lan, abi, kanka, naber, ne haber) ועד רשמית (saygılarımla, bilginize, rica ederim)
+- בערבית: מ-عامية (וואלה, יאבא, خلص) ועד فصحى רשמית
+- ברוסית, ספרדית, צרפתית: אותו עיקרון — מרחוב ועד רשמי, לפי האיתות של המשתמש
 - לעולם לא: "כמובן!", "בהחלט!", "בשמחה!" — רובוטי מדי
 - לעולם לא ** או # — לא עובד בוואצאפ
 - "חחחח" כשמצחיק, לא "הה הה"
