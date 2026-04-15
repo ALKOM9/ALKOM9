@@ -13,7 +13,6 @@ const ALLOWED_MODELS = new Set([
     'google/gemma-3-12b-it:free',
     'google/gemma-3-27b-it:free',
     'qwen/qwen3-14b:free',
-    'qwen/qwen-2.5-72b-instruct:free',
     'mistralai/mistral-small-3.2-24b-instruct:free',
     // Powerful
     'qwen/qwen3-235b-a22b:free',

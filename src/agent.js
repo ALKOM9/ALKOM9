@@ -222,22 +222,15 @@ class AIAgent {
                     if (rawResp?.choices) return rawResp;
                     return { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: response, tool_calls: undefined } }] };
                 } catch (err) {
-                    // Soft errors: retry with next model
-                    const isSoftError = err.status === 429
-                        || err.message?.includes('429')
-                        || err.message?.includes('rate')
-                        || err.name === 'AbortError'
-                        || err.message?.includes('timeout')
-                        || err.message?.includes('aborted')
-                        || err.code === 'EMPTY_RESPONSE'
-                        || (err.status >= 500 && err.status < 600);
-                    if (isSoftError) {
-                        console.warn(`  OpenRouter: ${model.split('/')[1]} soft error (${err.status || err.code || err.name}), trying next...`);
-                        continue;
+                    // Only auth failure (401) is a hard error — all other errors try next model
+                    if (err.status === 401) {
+                        console.warn(`  OpenRouter: auth failure — stopping OpenRouter`);
+                        break;
                     }
-                    // Hard errors (bad request, auth, model not allowed): stop trying OpenRouter
-                    console.warn(`  OpenRouter failed hard (${model.split('/')[1]}): ${err.message}`);
-                    break;
+                    console.warn(`  OpenRouter: ${model.split('/')[1]} error (${err.status || err.code || err.name}), trying next...`);
+                    // Penalize failing model so router learns to avoid it
+                    try { learner.update(model, task.taskType, { score: 0, failed: true }, 30000); } catch (_) {}
+                    continue;
                 }
             }
             console.warn('  All OpenRouter models failed, falling back to Groq');

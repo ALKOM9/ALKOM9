@@ -13,9 +13,9 @@ const CANDIDATES = {
     simple: [
         'meta-llama/llama-3.3-70b-instruct:free',
         'google/gemma-3-27b-it:free',
-        'qwen/qwen-2.5-72b-instruct:free',
         'google/gemma-3-12b-it:free',
         'qwen/qwen3-14b:free',
+        'mistralai/mistral-small-3.2-24b-instruct:free',
         'meta-llama/llama-3.1-8b-instruct:free',
         'meta-llama/llama-3.2-3b-instruct:free',
     ],
@@ -46,7 +46,7 @@ const CANDIDATES = {
         'qwen/qwen3-235b-a22b:free',
         'nvidia/llama-3.1-nemotron-70b-instruct:free',
         'meta-llama/llama-3.3-70b-instruct:free',
-        'qwen/qwen-2.5-72b-instruct:free',
+        'mistralai/mistral-small-3.2-24b-instruct:free',
     ],
     vision: [
         'meta-llama/llama-3.2-11b-vision-instruct:free',
