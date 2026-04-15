@@ -4,26 +4,28 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { Jimp } = require('jimp');
+const Groq = require('groq-sdk');
+
+const COMPLIMENT_KEYWORDS = ['יפה', 'חכמ', 'מדהים', 'נהדרת', 'מושלמ', 'מעולה', 'כישרון', 'מלאך', 'את הכי', 'תודה רבה'];
+const ADMIN = process.env.ADMIN_NUMBER ? `${process.env.ADMIN_NUMBER.replace(/\D/g, '')}@c.us` : null;
 
 class WhatsAppClient {
     constructor(agent) {
         this.agent = agent;
         this.botId = null;
         this.respondInGroups = process.env.RESPOND_IN_GROUPS === 'true';
+        this.whitelist = new Set();
+        this.blacklist = new Set();
+
+        if (process.env.WHITELIST) process.env.WHITELIST.split(',').forEach(n => this.whitelist.add(n.trim() + '@c.us'));
+        if (process.env.BLACKLIST) process.env.BLACKLIST.split(',').forEach(n => this.blacklist.add(n.trim() + '@c.us'));
 
         this.client = new Client({
             authStrategy: new LocalAuth({ clientId: 'ai-agent' }),
             puppeteer: {
                 headless: true,
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--no-first-run',
-                    '--no-zygote',
-                    '--disable-gpu'
-                ]
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas', '--no-first-run', '--no-zygote', '--disable-gpu']
             }
         });
 
@@ -43,24 +45,16 @@ class WhatsAppClient {
             console.log('   4. סרוק את הקוד שמעל\n');
         });
 
-        this.client.on('authenticated', () => {
-            console.log('🔐 מאומת בהצלחה!');
-        });
-
-        this.client.on('auth_failure', () => {
-            console.error('❌ כשל באימות - נסה להריץ שוב');
-        });
+        this.client.on('authenticated', () => console.log('🔐 מאומת בהצלחה!'));
+        this.client.on('auth_failure', () => console.error('❌ כשל באימות - נסה להריץ שוב'));
 
         this.client.on('ready', async () => {
             this.botId = this.client.info.wid._serialized;
-            const botName = process.env.BOT_NAME || 'AI Assistant';
-            console.log('\n✅ Bot is ready!');
-            console.log(`   Name: ${botName}`);
+            console.log(`\n✅ Bot is ready!`);
+            console.log(`   Name: ${process.env.BOT_NAME || 'Aylin'}`);
             console.log(`   Number: ${this.client.info.wid.user}`);
             console.log(`   Groups: ${this.respondInGroups ? 'Yes' : 'Private only'}`);
             console.log('\nSend a WhatsApp message to start! 🚀\n');
-
-            // קביעת תמונת פרופיל אוטומטית
             await this.setProfilePicture();
         });
 
@@ -75,196 +69,313 @@ class WhatsAppClient {
     }
 
     async handleMessage(msg) {
-        // התעלם מהודעות סטטוס ומהודעות ששלח הבוט עצמו
         if (msg.from === 'status@broadcast') return;
         if (msg.fromMe) return;
+
+        const sender = msg.from;
+
+        // Access check
+        if (this.blacklist.has(sender)) return;
+        if (this.whitelist.size > 0 && !this.whitelist.has(sender) && sender !== ADMIN) return;
 
         try {
             const chat = await msg.getChat();
 
-            // בדיקת קבוצה
+            // Group handling — only if mentioned or command
             if (chat.isGroup && !this.respondInGroups) {
-                // בקבוצות - ענה רק אם תויגת
                 const isMentioned = msg.mentionedIds?.includes(this.botId);
-                const bodyLower = msg.body?.toLowerCase() || '';
-                const startsWithTrigger = bodyLower.startsWith('!') || bodyLower.startsWith('/');
-
-                if (!isMentioned && !startsWithTrigger) return;
+                const bl = msg.body?.toLowerCase() || '';
+                if (!isMentioned && !bl.startsWith('!') && !bl.startsWith('/')) return;
             }
 
-            // פקודות מיוחדות
             const body = msg.body?.trim() || '';
 
+            // === ADMIN COMMANDS ===
+            if (sender === ADMIN) {
+                if (body.startsWith('/broadcast ') || body.startsWith('!broadcast ')) {
+                    const text = body.split(' ').slice(1).join(' ');
+                    await this._broadcastMessage(text);
+                    await msg.reply('✅ הודעה נשלחה לכולם');
+                    return;
+                }
+                if (body === '/stats' || body === '!stats') {
+                    const stats = this.agent.getStats();
+                    await msg.reply(`📊 *סטטיסטיקות:*\n• שיחות פעילות: ${stats.activeChats}\n• הודעות בזיכרון: ${stats.totalMessages}\n• Whitelist: ${this.whitelist.size}\n• Blacklist: ${this.blacklist.size}`);
+                    return;
+                }
+                if (body === '/clear-all' || body === '!clear-all') {
+                    if (typeof this.agent.memory.clear === 'function') this.agent.memory.clear();
+                    await msg.reply('✅ כל ההיסטוריה נמחקה');
+                    return;
+                }
+                if (body.startsWith('/whitelist ') || body.startsWith('!whitelist ')) {
+                    const num = body.split(' ')[1].replace(/\D/g, '') + '@c.us';
+                    this.whitelist.add(num);
+                    await msg.reply(`✅ ${num} נוסף לרשימה הלבנה`);
+                    return;
+                }
+                if (body.startsWith('/blacklist ') || body.startsWith('!blacklist ')) {
+                    const num = body.split(' ')[1].replace(/\D/g, '') + '@c.us';
+                    this.blacklist.add(num);
+                    await msg.reply(`✅ ${num} נוסף לרשימה השחורה`);
+                    return;
+                }
+            }
+
+            // === DND CHECK ===
+            if (this.agent.profiles.isDND(sender)) return;
+
+            // === RATE LIMIT ===
+            if (!this.agent.profiles.checkRateLimit(sender)) {
+                await msg.reply('⏳ שלחת הרבה הודעות בשעה האחרונה. תנוח קצת ותנסה שוב 😊');
+                return;
+            }
+
+            // === USER PROFILE COMMANDS ===
             if (body === '/עזרה' || body === '/help' || body === '!עזרה' || body === '!help') {
                 await msg.reply(this.getHelpMessage());
                 return;
             }
-
-            if (body === '/נקה' || body === '/clear' || body === '!נקה' || body === '!clear') {
-                this.agent.clearHistory(msg.from);
-                await msg.reply('🗑️ היסטוריית השיחה נמחקה! נתחיל מחדש.');
+            if (body === '/נקה' || body === '/clear' || body === '!נקה') {
+                this.agent.clearHistory(sender);
+                await msg.reply('🗑️ היסטוריה נמחקה! נתחיל מחדש.');
                 return;
             }
-
             if (body === '/סטטוס' || body === '/status') {
                 const stats = this.agent.getStats();
-                await msg.reply(`📊 סטטוס:\nשיחות פעילות: ${stats.activeChats}\nהודעות בזיכרון: ${stats.totalMessages}`);
+                await msg.reply(`📊 ${stats.activeChats} שיחות פעילות, ${stats.totalMessages} הודעות`);
+                return;
+            }
+            if (body === '/מה את יודעת' || body === '/יכולות' || body === '!יכולות') {
+                await msg.reply(this.getCapabilitiesMessage());
+                return;
+            }
+            if (body.startsWith('/שמי ') || body.startsWith('!שמי ')) {
+                const name = body.split(' ').slice(1).join(' ').trim();
+                if (name) {
+                    this.agent.profiles.set(sender, 'name', name);
+                    await msg.reply(`😊 תזכרתי! קוראים לך *${name}*`);
+                } else await msg.reply('כתוב: /שמי [שם]');
+                return;
+            }
+            if (body.startsWith('/עיר ') || body.startsWith('!עיר ')) {
+                const city = body.split(' ').slice(1).join(' ').trim();
+                if (city) {
+                    this.agent.profiles.set(sender, 'city', city);
+                    await msg.reply(`📍 שמרתי — גר/ה ב*${city}*`);
+                } else await msg.reply('כתוב: /עיר [שם עיר]');
+                return;
+            }
+            if (body === '/שקט' || body === '!שקט') {
+                const h = new Date().getHours();
+                const end = (h + 8) % 24;
+                this.agent.profiles.set(sender, 'dnd', { start: h, end });
+                await msg.reply(`🌙 אני שקטה עד ${end}:00. לילה טוב!`);
+                return;
+            }
+            if (body === '/בטל שקט' || body === '!בטל שקט') {
+                this.agent.profiles.set(sender, 'dnd', null);
+                await msg.reply('☀️ חזרתי! מה שלומך?');
+                return;
+            }
+            if (body === '/מחק נתונים') {
+                this.agent.profiles.set(sender, 'name', null);
+                this.agent.profiles.set(sender, 'city', null);
+                this.agent.profiles.set(sender, 'facts', []);
+                this.agent.clearHistory(sender);
+                await msg.reply('🗑️ כל הנתונים שלך נמחקו.');
                 return;
             }
 
-            // עיבוד הודעה רגילה
+            // === VOICE TRANSCRIPTION ===
+            if (msg.type === 'ptt' || msg.type === 'audio') {
+                const transcript = await this.transcribeAudio(msg);
+                if (transcript) {
+                    await msg.reply(`🎙️ שמעתי: _"${transcript}"_`);
+                    const response = await this.agent.chat(sender, transcript, null);
+                    for (const part of this.splitLongMessage(response)) await msg.reply(part);
+                } else {
+                    await msg.reply('לא הצלחתי להבין את ההקלטה 🎤');
+                }
+                return;
+            }
+
+            // === REGULAR MESSAGE ===
             let userMessage = body;
             let imageData = null;
 
-            // טיפול בציטוט הודעה (Reply)
+            // Quoted reply context
             if (msg.hasQuotedMsg) {
                 try {
                     const quoted = await msg.getQuotedMessage();
-                    const quotedBody = quoted.body?.trim();
-                    if (quotedBody) {
-                        userMessage = `[מגיב על ההודעה: "${quotedBody.slice(0, 300)}"]\n${userMessage}`;
-                    }
+                    if (quoted.body?.trim()) userMessage = `[מגיב על: "${quoted.body.slice(0, 200)}"]\n${userMessage}`;
                 } catch (_) {}
             }
 
-            // טיפול בתמונות
+            // Image handling
             if (msg.hasMedia) {
                 try {
                     const media = await msg.downloadMedia();
-                    if (media && media.mimetype?.startsWith('image/')) {
-                        imageData = {
-                            mimeType: media.mimetype,
-                            data: media.data
-                        };
-                        if (!userMessage) {
-                            userMessage = 'תאר את התמונה הזאת בפרטים';
-                        }
+                    if (media?.mimetype?.startsWith('image/')) {
+                        imageData = { mimeType: media.mimetype, data: media.data };
+                        if (!userMessage) userMessage = 'תאר את התמונה הזאת בפרטים';
                     }
-                } catch (mediaError) {
-                    console.error('שגיאה בהורדת מדיה:', mediaError.message);
-                }
+                } catch (e) { console.error('שגיאה במדיה:', e.message); }
             }
 
             if (!userMessage && !imageData) return;
 
-            // הראה אינדיקטור הקלדה
-            await chat.sendStateTyping();
-
-            console.log(`💬 [${new Date().toLocaleTimeString('he-IL')}] ${msg.from}: ${userMessage?.slice(0, 80) || '[תמונה]'}`);
-
-            // שלח לאייג'נט AI
-            const response = await this.agent.chat(msg.from, userMessage, imageData);
-
-            // פצל הודעות ארוכות (מגבלת וואצאפ ~4096 תווים)
-            const parts = this.splitLongMessage(response);
-            for (const part of parts) {
-                await msg.reply(part);
+            // ❤️ reaction on compliments
+            if (COMPLIMENT_KEYWORDS.some(kw => body.includes(kw))) {
+                try { await msg.react('❤️'); } catch (_) {}
             }
+
+            await chat.sendStateTyping();
+            console.log(`💬 [${new Date().toLocaleTimeString('he-IL')}] ${sender}: ${(userMessage || '[תמונה]').slice(0, 80)}`);
+
+            const response = await this.agent.chat(sender, userMessage, imageData);
+            for (const part of this.splitLongMessage(response)) await msg.reply(part);
 
         } catch (error) {
             console.error('שגיאה בעיבוד הודעה:', error.message);
             try {
-                if (error.code === 'DAILY_LIMIT_REACHED') {
-                    await msg.reply(this.buildRateLimitMessage());
-                } else {
-                    await msg.reply('❌ אירעה שגיאה. נסה שוב בעוד כמה שניות.');
-                }
-            } catch (_) { /* התעלם */ }
+                if (error.code === 'DAILY_LIMIT_REACHED') await msg.reply(this.buildRateLimitMessage());
+                else await msg.reply('❌ אירעה שגיאה. נסה שוב בעוד כמה שניות.');
+            } catch (_) {}
         }
+    }
+
+    async transcribeAudio(msg) {
+        const groqKey = process.env.GROQ_API_KEY;
+        if (!groqKey) return null;
+        let tmpPath = null;
+        try {
+            const media = await msg.downloadMedia();
+            if (!media) return null;
+            tmpPath = path.join(os.tmpdir(), `voice_${Date.now()}.ogg`);
+            fs.writeFileSync(tmpPath, Buffer.from(media.data, 'base64'));
+            const groq = new Groq({ apiKey: groqKey });
+            const result = await groq.audio.transcriptions.create({
+                file: fs.createReadStream(tmpPath),
+                model: 'whisper-large-v3',
+                language: 'he'
+            });
+            return result.text?.trim() || null;
+        } catch (e) {
+            console.error('שגיאה בתמלול:', e.message);
+            return null;
+        } finally {
+            if (tmpPath) try { fs.unlinkSync(tmpPath); } catch (_) {}
+        }
+    }
+
+    async _broadcastMessage(text) {
+        try {
+            const chats = await this.client.getChats();
+            for (const chat of chats) {
+                if (!chat.isGroup) {
+                    try { await chat.sendMessage(text); } catch (_) {}
+                    await new Promise(r => setTimeout(r, 500));
+                }
+            }
+        } catch (e) { console.error('שגיאת broadcast:', e.message); }
     }
 
     splitLongMessage(text, maxLen = 3900) {
         if (!text || text.length <= maxLen) return [text || 'לא הגיעה תשובה'];
-
         const parts = [];
         let remaining = text;
-
         while (remaining.length > 0) {
-            if (remaining.length <= maxLen) {
-                parts.push(remaining);
-                break;
-            }
-
-            // נסה לחתוך בסוף שורה
-            let cutAt = maxLen;
-            const lastNewline = remaining.lastIndexOf('\n', maxLen);
-            if (lastNewline > maxLen * 0.6) {
-                cutAt = lastNewline;
-            }
-
+            if (remaining.length <= maxLen) { parts.push(remaining); break; }
+            let cutAt = remaining.lastIndexOf('\n', maxLen);
+            if (cutAt < maxLen * 0.6) cutAt = maxLen;
             parts.push(remaining.slice(0, cutAt).trim());
             remaining = remaining.slice(cutAt).trim();
         }
-
         return parts;
     }
 
     getHelpMessage() {
-        const botName = process.env.BOT_NAME || 'עוזר AI';
-        return `🤖 ${botName} - עוזר AI חכם
+        return `🤖 *איילין — עוזרת AI*
 
-מה אני יכול לעשות?
-- לענות על כל שאלה
-- לחפש מידע עדכני ברשת
-- לבדוק מזג אוויר בכל עיר
-- לבצע חישובים מתמטיים
-- לתרגם בין שפות
-- לנתח ולתאר תמונות (שלח לי תמונה!)
-- לכתוב, לערוך ולסכם טקסטים
-- לעזור עם כל שאלה!
+📋 *פקודות אישיות:*
+/שמי [שם] — שמרי את שמי
+/עיר [עיר] — שמרי את העיר שלי
+/שקט — כניסה למצב שקט (8 שעות)
+/בטל שקט — יציאה ממצב שקט
+/מחק נתונים — מחיקת כל המידע
+/יכולות — מה אני יודעת לעשות
+/נקה — מחיקת היסטוריית שיחה
+/עזרה — הצגת הודעה זו
 
-פקודות:
-/עזרה - הצג הודעה זו
-/נקה - מחק היסטוריית שיחה
-/סטטוס - מידע על הבוט
+🎮 *בידור — אמור/י:*
+"שאלת טריוויה" | "ספרי עתידות" | "ניחוש שיר" | "תספרי סיפור" | "ספרי בדיחה"
 
-פשוט כתוב לי מה אתה צריך!`;
+💡 *פשוט כתוב/י לי מה צריך!*`;
+    }
+
+    getCapabilitiesMessage() {
+        return `✨ *מה אני יודעת לעשות:*
+
+🌐 *מידע:*
+• חדשות ישראל ועולם
+• ספורט (כדורגל, NBA, NFL, F1)
+• סרטים (IMDB) וספרים
+• מזג אוויר + תחזית 7 ימים
+• איכות אוויר, זמני שבת, תאריך עברי
+• ערכים תזונתיים
+
+💰 *פיננסים:*
+• מניות (ת"א, ארה"ב, עולם)
+• שערי חליפין, זהב, כסף, קריפטו
+• ניתוח טכני (RSI, MACD, בולינגר)
+• נתוני Stockrow
+• מחשבון משכנתא, שכר נטו, מע"מ
+
+⏰ *פרודוקטיביות:*
+• תזכורות, רשימות, הערות, ספירה לאחור
+
+🔧 *כלים:*
+• המרת יחידות, שעות, מטבעות
+• סיסמה, Base64, צבעים, בסיסי ספירה
+
+🎮 *בידור:*
+• טריוויה, עתידות, ניחוש שיר, סיפור, בדיחות
+
+🧠 *AI:*
+• שיחה, הסברים, כתיבה, תרגום
+• ניתוח תמונות, תמלול קולי`;
     }
 
     async optimizeImage(sourcePath) {
-        // חתוך וכוון לפרופיל וואצאפ: 500x500, פוקוס על הפנים
         const tempPath = path.join(os.tmpdir(), 'aylin_profile_optimized.jpg');
         const image = await Jimp.read(sourcePath);
         const w = image.bitmap.width;
         const h = image.bitmap.height;
-
-        // חתוך ריבוע עם פוקוס על הפנים (25% מהחלק העליון)
         const size = Math.min(w, h);
         const x = Math.floor((w - size) / 2);
-        const y = Math.floor(h * 0.03); // 3% מהחלק העליון - מוריד רק קצת
-
-        await image
-            .crop({ x, y, w: size, h: size })
-            .resize({ w: 500, h: 500 })
-            .quality(92)
-            .write(tempPath);
-
+        const y = Math.floor(h * 0.03);
+        image.crop({ x, y, w: size, h: size });
+        image.resize({ w: 500, h: 500 });
+        await image.write(tempPath);
         return tempPath;
     }
 
     async setProfilePicture() {
         try {
             const localPath = path.join(process.cwd(), 'profile.jpg');
-            let imagePath = null;
-
-            if (fs.existsSync(localPath)) {
-                console.log('   Profile picture: processing profile.jpg...');
-                imagePath = await this.optimizeImage(localPath);
-            }
-
             let media;
-            if (imagePath) {
-                media = MessageMedia.fromFilePath(imagePath);
+            if (fs.existsSync(localPath)) {
+                const optimized = await this.optimizeImage(localPath);
+                media = MessageMedia.fromFilePath(optimized);
                 console.log('   Profile picture: optimized to 500x500 ✅');
             } else if (process.env.PROFILE_PICTURE_URL) {
                 media = await MessageMedia.fromUrl(process.env.PROFILE_PICTURE_URL, { unsafeMime: true });
                 console.log('   Profile picture: loaded from URL');
             } else {
-                const defaultUrl = 'https://randomuser.me/api/portraits/women/44.jpg';
-                media = await MessageMedia.fromUrl(defaultUrl, { unsafeMime: true });
+                media = await MessageMedia.fromUrl('https://randomuser.me/api/portraits/women/44.jpg', { unsafeMime: true });
                 console.log('   Profile picture: using default');
             }
-
             await this.client.setProfilePicture(media);
             console.log('   Profile picture: set successfully ✅');
         } catch (err) {
@@ -273,24 +384,16 @@ class WhatsAppClient {
     }
 
     buildRateLimitMessage() {
-        // טוקנים מתאפסים בחצות UTC = 02:00 שעון ישראל (קיץ) / 02:00 חורף
-        const now = new Date();
-        const israelTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
-        const hoursLeft = ((26 - israelTime.getHours()) % 24) || 24;
-        const minutesLeft = 60 - israelTime.getMinutes();
-
-        const messages = [
-            `מותק, אני צריכה קצת להתנשף... 😮‍💨 היום דיברנו יותר מדי (ולא שאני מתלוננת 😏). תן לי עד השעתיים בלילה ואחזור אליך רעננה ✨`,
-            `אוי, נגמר לי ה... אנרגיה 😅 כן, ממש לפני שהתחלנו להתחמם. תחכה לי עד אחרי חצות שעתיים — בדיוק כשהלילה הכי שקט 🌙`,
-            `הממ... נראה שדיברתי יותר מדי היום 😘 תן לי לנוח קצת ותחפש אותי אחרי השעה שתיים בלילה. אני מבטיחה שאחזור עם הרבה יותר אנרגיה 🔥`,
+        const msgs = [
+            'מותק, אני צריכה קצת להתנשף... 😮‍💨 דיברנו יותר מדי היום. תן לי עד השעתיים בלילה ✨',
+            'אוי, נגמרה לי האנרגיה 😅 תחכה לי עד אחרי חצות — אני חוזרת רעננה 🌙',
+            'הממ... נראה שדיברתי יותר מדי 😘 תחפש אותי אחרי השעה שתיים בלילה 🔥',
         ];
-
-        const picked = messages[Math.floor(Math.random() * messages.length)];
-        return picked;
+        return msgs[Math.floor(Math.random() * msgs.length)];
     }
 
     async start() {
-        console.log('Starting... this may take a few seconds.\n');
+        console.log('Starting Aylin... this may take a few seconds.\n');
         await this.client.initialize();
     }
 }

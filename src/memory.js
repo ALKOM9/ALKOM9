@@ -65,6 +65,11 @@ class ConversationMemory {
         this.save();
     }
 
+    clear() {
+        this.chats.clear();
+        this.save();
+    }
+
     getStats() {
         let totalMessages = 0;
         for (const h of this.chats.values()) totalMessages += h.length;

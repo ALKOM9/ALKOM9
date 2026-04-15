@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  aylin:
+    build: .
+    container_name: aylin-bot
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./profile.jpg:/app/profile.jpg:ro
+      - ./.wwebjs_auth:/app/.wwebjs_auth
+    env_file:
+      - .env
+    environment:
+      - DASHBOARD_ENABLED=true
+    ports:
+      - "3000:3000"
+    shm_size: '512mb'
