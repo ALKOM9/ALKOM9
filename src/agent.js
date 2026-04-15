@@ -11,6 +11,7 @@ const { convertUnits, generatePassword, encodeDecodeBase64, convertNumber, conve
 const { getTrivia, getFortune, getSongGuess, getStoryNode, getDailyJoke } = require('./tools/games');
 const { getTechnicalAnalysis, getStockrowData } = require('./tools/technicals');
 const OpenRouterProvider = require('./providers/openrouter');
+const contextManager = require('./contextManager');
 const { classify: classifyTask } = require('./router/taskClassifier');
 const { select: routerSelect } = require('./router/router');
 const orchestrator = require('./orchestrator/orchestrator');
@@ -146,7 +147,34 @@ class AIAgent {
         this._autoLearn(chatId, userMessage || '');
 
         this.memory.addMessage(chatId, userMessage || '[תמונה]', responseText);
+
+        // Auto-summarize if history is getting long (async, non-blocking)
+        const updatedHistory = this.memory.getHistory(chatId);
+        if (contextManager.needsSummary(chatId, updatedHistory.length)) {
+            this._summarizeContext(chatId, updatedHistory).catch(() => {});
+        }
+
         return responseText;
+    }
+
+    // Summarize old conversation history and trim memory (async)
+    async _summarizeContext(chatId, history) {
+        try {
+            const summaryMessages = contextManager.buildSummaryRequest(history);
+            const resp = await this.callAI(summaryMessages, false, 512, false, chatId, '');
+            const text = resp.choices[0]?.message?.content || '';
+            const parsed = contextManager.parseSummaryResponse(text);
+            if (parsed?.summary) {
+                contextManager.setSummary(chatId, parsed.summary, parsed.keyFacts);
+                // Trim memory to last 8 messages
+                const trimmed = contextManager.trimHistory(history);
+                this.memory.chats.set(chatId, trimmed);
+                this.memory.save();
+                console.log(`  🗜️  Context compressed for ${chatId} (${history.length}→${trimmed.length} msgs)`);
+            }
+        } catch (e) {
+            // Non-critical — silent fail
+        }
     }
 
     async callAI(messages, useTools, maxTokens, isImage, chatId = '', userMessage = '') {
@@ -343,6 +371,7 @@ class AIAgent {
             ? `המשתמש לא כתב כבר ${Math.round((Date.now()-prevSeen)/3600000)} שעות — קבלי אותו בחום טבעי בתחילת התגובה.` : '';
         const fallbackNote = this.usingFallback
             ? 'היום את מרגישה קצת מטושטשת ועייפה — אם מישהו שואל, רמזי שישנת פחות טוב הלילה. אל תסבירי יותר.' : '';
+        const contextBlock = contextManager.buildContextBlock(chatId);
 
         return `את איילין — בת 24, ישראלית-טורקית, חיה ונושמת.
 תאריך ושעה: ${dateStr}
@@ -350,6 +379,7 @@ class AIAgent {
 ${userName} ${userCity} ${userFacts}
 ${returnGreeting}
 ${fallbackNote}
+${contextBlock}
 
 אישיות:
 - יש לך דעות חזקות ואת לא מפחדת לסתור את המשתמש כשהוא טועה — את לא yes-machine
