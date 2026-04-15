@@ -10,10 +10,6 @@ const ALLOWED_MODELS = new Set([
     'qwen/qwen3-8b:free',
     // Balanced
     'meta-llama/llama-3.3-70b-instruct:free',
-    'google/gemma-3-12b-it:free',
-    'google/gemma-3-27b-it:free',
-    'qwen/qwen3-14b:free',
-    'mistralai/mistral-small-3.2-24b-instruct:free',
     // Powerful
     'qwen/qwen3-235b-a22b:free',
     'qwen/qwen3-30b-a3b:free',

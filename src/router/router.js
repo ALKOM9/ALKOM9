@@ -9,15 +9,16 @@ const EPSILON = 0.1; // 10% exploration rate
 const DIVERSITY_THRESHOLD = 0.70; // Force rotation if one model used >70% of recent calls
 
 // Task-type → candidate models mapping
+// ⚠️  Only include models confirmed available on OpenRouter free tier with tool support.
+//     Gemma models (gemma-3-*) exist but do NOT support tool use — excluded from all lists.
+//     Models giving "No endpoints found" are removed entirely.
 const CANDIDATES = {
     simple: [
-        'meta-llama/llama-3.3-70b-instruct:free',
-        'google/gemma-3-27b-it:free',
-        'google/gemma-3-12b-it:free',
-        'qwen/qwen3-14b:free',
-        'mistralai/mistral-small-3.2-24b-instruct:free',
-        'meta-llama/llama-3.1-8b-instruct:free',
-        'meta-llama/llama-3.2-3b-instruct:free',
+        'meta-llama/llama-3.3-70b-instruct:free',   // reliable, supports tools
+        'meta-llama/llama-3.1-8b-instruct:free',     // fast, supports tools
+        'deepseek/deepseek-chat-v3-0324:free',        // high quality
+        'qwen/qwen3-30b-a3b:free',                   // solid fallback
+        'meta-llama/llama-3.2-3b-instruct:free',     // smallest/fastest
     ],
     reasoning: [
         'deepseek/deepseek-r1-0528:free',
@@ -37,16 +38,16 @@ const CANDIDATES = {
     creative: [
         'qwen/qwen3-235b-a22b:free',
         'deepseek/deepseek-chat-v3-0324:free',
-        'mistralai/mistral-small-3.2-24b-instruct:free',
         'meta-llama/llama-3.3-70b-instruct:free',
-        'google/gemma-3-27b-it:free',
+        'qwen/qwen3-30b-a3b:free',
+        'meta-llama/llama-3.1-8b-instruct:free',
     ],
     analysis: [
         'deepseek/deepseek-chat-v3-0324:free',
         'qwen/qwen3-235b-a22b:free',
         'nvidia/llama-3.1-nemotron-70b-instruct:free',
         'meta-llama/llama-3.3-70b-instruct:free',
-        'mistralai/mistral-small-3.2-24b-instruct:free',
+        'qwen/qwen3-30b-a3b:free',
     ],
     vision: [
         'meta-llama/llama-3.2-11b-vision-instruct:free',

@@ -187,7 +187,7 @@ class AIAgent {
     // Short system prompt for Groq fallback (saves ~600 tokens)
     _groqMessages(messages) {
         const profile = {}; // lite — no profile lookup needed
-        const lite = `את איילין — ישראלית-טורקית, בת 24. חרמנית, חמה, עוקצנית. מדברת עברית קלילה, מתאימה לרמת המשתמש. משפטים קצרים. לא ** או #. אל תנחשי עובדות — חפשי.`;
+        const lite = `שמך איילין, בת 24, ישראלית-טורקית. חרמנית וחמה, עברית קלילה. משפטים קצרים. לא ** או #. אל תנחשי עובדות — חפשי. חשוב: store_fact רק אם המשתמש אמר עובדה על עצמו (שמו, עירו וכו') — אל תשמרי עובדות על עצמך.`;
         const nonSys = messages.filter(m => m.role !== 'system').slice(-4);
         return [{ role: 'system', content: lite }, ...nonSys];
     }

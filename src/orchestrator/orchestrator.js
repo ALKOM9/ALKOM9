@@ -42,8 +42,12 @@ class Orchestrator {
                 result = await this._single(routing, messages, tools, maxTokens);
             }
         } catch (err) {
-            // Any pattern failure → fall back to single with primary model
-            console.warn(`  Orchestrator pattern failed (${err.message}), retrying as single...`);
+            // Only retry without tools if the error is specifically about tool support.
+            // For all other errors (model not found, rate limit, etc.), rethrow so
+            // agent.js can try the next model in the list without wasting another API call.
+            const isToolSupportError = err.message?.includes('tool use') || err.message?.includes('tool_use');
+            if (!isToolSupportError) throw err;
+            console.warn(`  Orchestrator: ${routing.model.split('/')[1]} no tool support, retrying without tools...`);
             result = await this._single(routing, messages, [], maxTokens);
         }
 
