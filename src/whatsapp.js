@@ -391,7 +391,8 @@ class WhatsAppClient {
         try {
             const localPath = path.join(process.cwd(), 'profile.jpg');
             let media;
-            if (fs.existsSync(localPath)) {
+            const localExists = fs.existsSync(localPath) && fs.statSync(localPath).size > 1000;
+            if (localExists) {
                 const optimized = await this.optimizeImage(localPath);
                 media = MessageMedia.fromFilePath(optimized);
                 console.log('   Profile picture: optimized to 500x500 ✅');

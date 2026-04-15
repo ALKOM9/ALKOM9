@@ -184,37 +184,54 @@ class AIAgent {
         return [...sys, ...rest];
     }
 
+    // Short system prompt for Groq fallback (saves ~600 tokens)
+    _groqMessages(messages) {
+        const profile = {}; // lite — no profile lookup needed
+        const lite = `את איילין — ישראלית-טורקית, בת 24. חרמנית, חמה, עוקצנית. מדברת עברית קלילה, מתאימה לרמת המשתמש. משפטים קצרים. לא ** או #. אל תנחשי עובדות — חפשי.`;
+        const nonSys = messages.filter(m => m.role !== 'system').slice(-4);
+        return [{ role: 'system', content: lite }, ...nonSys];
+    }
+
     async callAI(messages, useTools, maxTokens, isImage, chatId = '', userMessage = '') {
         // Always trim to avoid token limit errors on all providers
         const trimmedMessages = this._trimMessages(messages);
 
-        // Priority 1: OpenRouter with intelligent routing
+        // Priority 1: OpenRouter with intelligent routing + model fallback on 429
         if (this.openrouter) {
-            try {
-                const task = classifyTask(userMessage, isImage);
-                const routing = routerSelect(task);
-                console.log(`  🧭 Route: ${routing.model.split('/')[1]} (${task.taskType}/${task.complexity}, conf=${routing.confidence}) — ${routing.reason}`);
+            const task = classifyTask(userMessage, isImage);
+            const routing = routerSelect(task);
+            const modelsToTry = [routing.model, ...(routing.alternatives || [])].slice(0, 3);
 
-                const { response, modelsUsed, pattern, latencyMs, rawResp } = await orchestrator.execute(
-                    routing, trimmedMessages, useTools ? TOOLS : [], maxTokens
-                );
+            for (const model of modelsToTry) {
+                try {
+                    console.log(`  🧭 Route: ${model.split('/')[1]} (${task.taskType}/${task.complexity}, conf=${routing.confidence})`);
+                    const fakeRouting = { ...routing, model };
+                    const { response, latencyMs, rawResp } = await orchestrator.execute(
+                        fakeRouting, trimmedMessages, useTools ? TOOLS : [], maxTokens
+                    );
 
-                // Async evaluation + learning (non-blocking)
-                if (response) {
-                    evaluator.scoreAsync(response, trimmedMessages, task, routing, latencyMs)
-                        .then(evalResult => {
-                            if (evalResult) learner.update(routing.model, task.taskType, evalResult, latencyMs);
-                        })
-                        .catch(() => {});
+                    if (response) {
+                        evaluator.scoreAsync(response, trimmedMessages, task, routing, latencyMs)
+                            .then(evalResult => {
+                                if (evalResult) learner.update(model, task.taskType, evalResult, latencyMs);
+                            })
+                            .catch(() => {});
+                    }
+
+                    this.usingFallback = false;
+                    if (rawResp?.choices) return rawResp;
+                    return { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: response, tool_calls: undefined } }] };
+                } catch (err) {
+                    if (err.status === 429 || err.message?.includes('429') || err.message?.includes('rate')) {
+                        console.warn(`  OpenRouter: ${model.split('/')[1]} rate-limited, trying next model...`);
+                        continue; // try next model
+                    }
+                    console.warn(`  OpenRouter failed (${model.split('/')[1]}): ${err.message}`);
+                    break; // non-429 error → stop trying OpenRouter
                 }
-
-                this.usingFallback = false;
-                if (rawResp?.choices) return rawResp;
-                return { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: response, tool_calls: undefined } }] };
-            } catch (err) {
-                console.warn('  OpenRouter failed, falling back to Groq:', err.message);
-                this.usingFallback = true;
             }
+            console.warn('  All OpenRouter models failed, falling back to Groq');
+            this.usingFallback = true;
         }
 
         // Priority 2: Groq
@@ -223,7 +240,7 @@ class AIAgent {
             const model = isImage ? 'llama-3.2-11b-vision-preview' : needsPower ? 'llama-3.3-70b-versatile' : 'llama-3.1-8b-instant';
             const FALLBACK = 'llama-3.1-8b-instant';
 
-            const groqCall = async (m, msgs = trimmedMessages) => {
+            const groqCall = async (m, msgs = this._groqMessages(messages)) => {
                 try {
                     return await this.groq.chat.completions.create({
                         model: m, messages: msgs,
