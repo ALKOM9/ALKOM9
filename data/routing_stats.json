@@ -1,0 +1,27 @@
+{
+  "meta-llama/llama-3.3-70b-instruct": {
+    "reasoning": {
+      "qualityAvg": 8.200000000000001,
+      "successRate": 0.9440000000000002,
+      "latencyAvg": 2800,
+      "callCount": 1,
+      "lastUpdated": "2026-04-15T12:14:05.888Z"
+    }
+  },
+  "qwen/qwen3-coder-480b": {
+    "reasoning": {
+      "qualityAvg": 9,
+      "successRate": 0.88,
+      "latencyAvg": 9000,
+      "callCount": 0
+    }
+  },
+  "lfm/lfm2.5-1.2b-instruct": {
+    "reasoning": {
+      "qualityAvg": 5,
+      "successRate": 0.95,
+      "latencyAvg": 500,
+      "callCount": 0
+    }
+  }
+}
