@@ -178,7 +178,7 @@ class AIAgent {
     }
 
     async callAI(messages, useTools, maxTokens, isImage, chatId = '', userMessage = '') {
-        // If OpenRouter is available, use intelligent routing
+        // Priority 1: OpenRouter with intelligent routing
         if (this.openrouter) {
             try {
                 const task = classifyTask(userMessage, isImage);
@@ -195,30 +195,52 @@ class AIAgent {
                         .then(evalResult => {
                             if (evalResult) learner.update(routing.model, task.taskType, evalResult, latencyMs);
                         })
-                        .catch(() => {}); // Silent failure
+                        .catch(() => {});
                 }
 
-                // If orchestrator returned a raw OpenAI-compatible response (single model), return it
-                // Otherwise wrap the text response
+                this.usingFallback = false;
                 if (rawResp?.choices) return rawResp;
                 return { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: response, tool_calls: undefined } }] };
             } catch (err) {
-                console.warn('  OpenRouter routing failed, falling back to Claude/Groq:', err.message);
+                console.warn('  OpenRouter failed, falling back to Groq:', err.message);
                 this.usingFallback = true;
-                // Fall through to Claude/Groq fallback below
             }
         }
 
-        // Existing fallback: Try Claude first (not for images)
-        if (this.claude && !isImage) {
+        // Priority 2: Groq
+        if (this.groq) {
+            const model = isImage ? 'llama-3.2-11b-vision-preview' : 'llama-3.3-70b-versatile';
+            const FALLBACK = 'llama-3.1-8b-instant';
+
+            const groqCall = async (m) => {
+                try {
+                    return await this.groq.chat.completions.create({
+                        model: m, messages,
+                        tools: useTools && !isImage ? TOOLS : undefined,
+                        tool_choice: useTools && !isImage ? 'auto' : undefined,
+                        max_tokens: maxTokens, temperature: 0.7
+                    });
+                } catch (err) {
+                    const status = err?.status || err?.statusCode;
+                    const code = err?.error?.code || err?.code;
+                    if (status === 429 && m === FALLBACK) {
+                        // Groq daily limit hit — fall through to Claude
+                        throw Object.assign(new Error('GROQ_LIMIT'), { code: 'GROQ_LIMIT' });
+                    }
+                    if (status === 429) return groqCall(FALLBACK);
+                    if (useTools && (code === 'tool_use_failed' || status === 400)) {
+                        return this.groq.chat.completions.create({ model: m, messages, max_tokens: maxTokens, temperature: 0.7 });
+                    }
+                    throw err;
+                }
+            };
+
             try {
-                const resp = await this.claude.call(messages, useTools ? TOOLS : [], { maxTokens });
-                this.usingFallback = false;
+                const resp = await groqCall(model);
                 return resp;
             } catch (err) {
-                const status = err?.status || err?.statusCode;
-                if (status === 429 || status === 529 || status === 503 || err?.message?.includes('overloaded')) {
-                    console.log('  Claude rate limited, switching to Groq...');
+                if (err.code === 'GROQ_LIMIT' || err?.status === 429) {
+                    console.warn('  Groq limit reached, falling back to Claude:', err.message);
                     this.usingFallback = true;
                 } else {
                     throw err;
@@ -226,31 +248,21 @@ class AIAgent {
             }
         }
 
-        if (!this.groq) throw Object.assign(new Error('DAILY_LIMIT_REACHED'), { code: 'DAILY_LIMIT_REACHED' });
-
-        const model = isImage ? 'llama-3.2-11b-vision-preview' : 'llama-3.3-70b-versatile';
-        const FALLBACK = 'llama-3.1-8b-instant';
-
-        const groqCall = async (m) => {
+        // Priority 3: Claude (last resort)
+        if (this.claude && !isImage) {
             try {
-                return await this.groq.chat.completions.create({
-                    model: m, messages,
-                    tools: useTools && !isImage ? TOOLS : undefined,
-                    tool_choice: useTools && !isImage ? 'auto' : undefined,
-                    max_tokens: maxTokens, temperature: 0.7
-                });
+                const resp = await this.claude.call(messages, useTools ? TOOLS : [], { maxTokens });
+                return resp;
             } catch (err) {
                 const status = err?.status || err?.statusCode;
-                const code = err?.error?.code || err?.code;
-                if (status === 429 && m === FALLBACK) throw Object.assign(new Error('DAILY_LIMIT_REACHED'), { code: 'DAILY_LIMIT_REACHED' });
-                if (status === 429) return groqCall(FALLBACK);
-                if (useTools && (code === 'tool_use_failed' || status === 400)) {
-                    return this.groq.chat.completions.create({ model: m, messages, max_tokens: maxTokens, temperature: 0.7 });
+                if (status === 429 || status === 529 || status === 503 || err?.message?.includes('overloaded')) {
+                    throw Object.assign(new Error('DAILY_LIMIT_REACHED'), { code: 'DAILY_LIMIT_REACHED' });
                 }
                 throw err;
             }
-        };
-        return groqCall(model);
+        }
+
+        throw Object.assign(new Error('DAILY_LIMIT_REACHED'), { code: 'DAILY_LIMIT_REACHED' });
     }
 
     _autoLearn(chatId, text) {
