@@ -15,15 +15,22 @@ async function main() {
         process.exit(1);
     }
 
-    console.log('\n' + '='.repeat(55));
-    console.log('  Aylin WhatsApp AI — Powered by Claude + Groq');
-    console.log('='.repeat(55));
-    if (anthropicKey) console.log('  Primary AI: Claude (Anthropic)');
-    else console.log('  Primary AI: Groq (fallback only mode)');
-    console.log('='.repeat(55) + '\n');
-
     const openrouterKey = process.env.OPENROUTER_API_KEY;
-    if (openrouterKey) console.log('  OpenRouter: enabled (intelligent routing active)');
+
+    console.log('\n' + '='.repeat(55));
+    console.log('  Aylin WhatsApp AI');
+    console.log('='.repeat(55));
+    if (openrouterKey) {
+        console.log('  Primary AI:  OpenRouter (intelligent routing)');
+        console.log('  Fallback #1: Groq');
+        if (anthropicKey) console.log('  Fallback #2: Claude');
+    } else if (anthropicKey) {
+        console.log('  Primary AI:  Claude (Anthropic)');
+        if (groqKey) console.log('  Fallback:    Groq');
+    } else {
+        console.log('  Primary AI:  Groq');
+    }
+    console.log('='.repeat(55) + '\n');
     const agent = new AIAgent(anthropicKey, groqKey, openrouterKey);
     const whatsapp = new WhatsAppClient(agent);
 

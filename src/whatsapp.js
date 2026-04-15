@@ -234,7 +234,7 @@ class WhatsAppClient {
             console.log(`💬 [${new Date().toLocaleTimeString('he-IL')}] ${sender}: ${(userMessage || '[תמונה]').slice(0, 80)}`);
 
             const response = await this.agent.chat(sender, userMessage, imageData);
-            for (const part of this.splitLongMessage(response)) await msg.reply(part);
+            await this.sendHumanLike(msg, chat, response);
 
         } catch (error) {
             console.error('שגיאה בעיבוד הודעה:', error.message);
@@ -279,6 +279,32 @@ class WhatsAppClient {
                 }
             }
         } catch (e) { console.error('שגיאת broadcast:', e.message); }
+    }
+
+    // Send response as multiple natural messages with typing delays
+    async sendHumanLike(msg, chat, text) {
+        if (!text) return;
+
+        // Split on ||| marker (AI-driven split) or auto-split long text
+        const rawParts = text.split('|||').map(p => p.trim()).filter(Boolean);
+
+        // Further split any part that's too long
+        const parts = [];
+        for (const part of rawParts) {
+            for (const chunk of this.splitLongMessage(part)) parts.push(chunk);
+        }
+
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            if (i > 0) {
+                // Show typing indicator between messages
+                try { await chat.sendStateTyping(); } catch (_) {}
+                // Delay: ~40ms per character, between 600ms and 3000ms
+                const delay = Math.min(3000, Math.max(600, part.length * 40));
+                await new Promise(r => setTimeout(r, delay));
+            }
+            await msg.reply(part);
+        }
     }
 
     splitLongMessage(text, maxLen = 3900) {

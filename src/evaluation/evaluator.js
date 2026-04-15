@@ -2,7 +2,7 @@
 // Does NOT block user response (fire-and-forget pattern)
 // Judge model: meta-llama/llama-3.3-70b-instruct (fast, reliable, free)
 
-const JUDGE_MODEL = 'meta-llama/llama-3.3-70b-instruct';
+const JUDGE_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
 const JUDGE_TIMEOUT = 15000;
 
 const RUBRIC_PROMPT = `You are an AI response quality judge. Score the assistant response below on a scale of 0-10 for each criterion.
