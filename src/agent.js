@@ -222,12 +222,22 @@ class AIAgent {
                     if (rawResp?.choices) return rawResp;
                     return { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: response, tool_calls: undefined } }] };
                 } catch (err) {
-                    if (err.status === 429 || err.message?.includes('429') || err.message?.includes('rate')) {
-                        console.warn(`  OpenRouter: ${model.split('/')[1]} rate-limited, trying next model...`);
-                        continue; // try next model
+                    // Soft errors: retry with next model
+                    const isSoftError = err.status === 429
+                        || err.message?.includes('429')
+                        || err.message?.includes('rate')
+                        || err.name === 'AbortError'
+                        || err.message?.includes('timeout')
+                        || err.message?.includes('aborted')
+                        || err.code === 'EMPTY_RESPONSE'
+                        || (err.status >= 500 && err.status < 600);
+                    if (isSoftError) {
+                        console.warn(`  OpenRouter: ${model.split('/')[1]} soft error (${err.status || err.code || err.name}), trying next...`);
+                        continue;
                     }
-                    console.warn(`  OpenRouter failed (${model.split('/')[1]}): ${err.message}`);
-                    break; // non-429 error → stop trying OpenRouter
+                    // Hard errors (bad request, auth, model not allowed): stop trying OpenRouter
+                    console.warn(`  OpenRouter failed hard (${model.split('/')[1]}): ${err.message}`);
+                    break;
                 }
             }
             console.warn('  All OpenRouter models failed, falling back to Groq');

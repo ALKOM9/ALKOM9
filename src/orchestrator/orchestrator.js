@@ -142,7 +142,11 @@ class Orchestrator {
     _pickThree(routing, taskType) {
         const all = [routing.model, ...(routing.alternatives || [])];
         while (all.length < 3) {
-            const fallbacks = ['meta-llama/llama-3.3-70b-instruct', 'openai/gpt-oss-20b', 'google/gemma-3-27b'];
+            const fallbacks = [
+                'meta-llama/llama-3.3-70b-instruct:free',
+                'qwen/qwen-2.5-72b-instruct:free',
+                'google/gemma-3-27b-it:free',
+            ];
             for (const f of fallbacks) {
                 if (!all.includes(f)) { all.push(f); break; }
             }
@@ -153,7 +157,7 @@ class Orchestrator {
     // Pick 2 models for Draft→Review
     _pickTwo(routing, taskType) {
         const all = [routing.model, ...(routing.alternatives || [])];
-        if (all.length < 2) all.push('meta-llama/llama-3.3-70b-instruct');
+        if (all.length < 2) all.push('meta-llama/llama-3.3-70b-instruct:free');
         return all.slice(0, 2);
     }
 }
