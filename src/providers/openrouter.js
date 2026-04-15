@@ -2,30 +2,32 @@
 // Returns OpenAI-compatible responses (OpenRouter already speaks OpenAI format)
 
 const ALLOWED_MODELS = new Set([
-    'nous/hermes-3-405b',
-    'meta-llama/llama-3.2-3b-instruct',
-    'meta-llama/llama-3.3-70b-instruct',
-    'google/gemma-3-27b',
-    'google/gemma-3-12b',
-    'google/gemma-3-4b',
-    'google/gemma-3n-2b',
-    'venice/uncensored',
-    'qwen/qwen3-coder-480b',
-    'z-ai/glm-4.5-air',
-    'openai/gpt-oss-20b',
-    'openai/gpt-oss-120b',
-    'nvidia/nemotron-nano-9b-v2',
-    'qwen/qwen3-next-80b',
-    'nvidia/nemotron-nano-12b-vl',
-    'nvidia/nemotron-3-nano-30b',
-    'lfm/lfm2.5-1.2b-instruct',
-    'lfm/lfm2.5-1.2b-thinking',
-    'minimax/m2.5',
-    'nvidia/nemotron-embed-vl-1b',
-    'nvidia/nemotron-3-super',
-    'google/gemma-4-31b',
-    'google/gemma-4-26b',
-    'elephant',
+    // Fast / Small
+    'meta-llama/llama-3.2-3b-instruct:free',
+    'meta-llama/llama-3.1-8b-instruct:free',
+    'google/gemma-3-4b-it:free',
+    'google/gemma-3n-e4b-it:free',
+    'qwen/qwen3-8b:free',
+    // Balanced
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'google/gemma-3-12b-it:free',
+    'google/gemma-3-27b-it:free',
+    'qwen/qwen3-14b:free',
+    'qwen/qwen-2.5-72b-instruct:free',
+    'mistralai/mistral-small-3.2-24b-instruct:free',
+    // Powerful
+    'qwen/qwen3-235b-a22b:free',
+    'qwen/qwen3-30b-a3b:free',
+    'deepseek/deepseek-chat-v3-0324:free',
+    'nvidia/llama-3.1-nemotron-70b-instruct:free',
+    // Reasoning
+    'deepseek/deepseek-r1:free',
+    'deepseek/deepseek-r1-0528:free',
+    // Coding
+    'qwen/qwen-2.5-coder-32b-instruct:free',
+    // Vision
+    'meta-llama/llama-3.2-11b-vision-instruct:free',
+    'qwen/qwen2.5-vl-7b-instruct:free',
 ]);
 
 const BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';

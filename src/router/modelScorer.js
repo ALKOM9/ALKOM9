@@ -12,30 +12,32 @@ const MAX_LATENCY_MS = 15000; // Used to normalize latency to 0-10 scale
 // Cold-start priors: default scores before any real data
 // Based on known model capabilities and typical free-tier performance
 const COLD_START_PRIORS = {
-    'nous/hermes-3-405b':                { quality: 8.5, successRate: 0.90, latencyAvg: 8000 },
-    'meta-llama/llama-3.2-3b-instruct':  { quality: 6.0, successRate: 0.95, latencyAvg: 800  },
-    'meta-llama/llama-3.3-70b-instruct': { quality: 8.0, successRate: 0.93, latencyAvg: 3000 },
-    'google/gemma-3-27b':                { quality: 7.5, successRate: 0.92, latencyAvg: 2500 },
-    'google/gemma-3-12b':                { quality: 7.0, successRate: 0.93, latencyAvg: 1800 },
-    'google/gemma-3-4b':                 { quality: 6.0, successRate: 0.94, latencyAvg: 900  },
-    'google/gemma-3n-2b':                { quality: 5.5, successRate: 0.95, latencyAvg: 600  },
-    'venice/uncensored':                 { quality: 6.5, successRate: 0.85, latencyAvg: 3000 },
-    'qwen/qwen3-coder-480b':             { quality: 9.0, successRate: 0.88, latencyAvg: 9000 },
-    'z-ai/glm-4.5-air':                  { quality: 7.0, successRate: 0.90, latencyAvg: 2000 },
-    'openai/gpt-oss-20b':                { quality: 7.5, successRate: 0.92, latencyAvg: 1500 },
-    'openai/gpt-oss-120b':               { quality: 8.5, successRate: 0.91, latencyAvg: 4000 },
-    'nvidia/nemotron-nano-9b-v2':        { quality: 6.5, successRate: 0.92, latencyAvg: 1200 },
-    'qwen/qwen3-next-80b':               { quality: 8.0, successRate: 0.90, latencyAvg: 4000 },
-    'nvidia/nemotron-nano-12b-vl':       { quality: 7.0, successRate: 0.91, latencyAvg: 2000 },
-    'nvidia/nemotron-3-nano-30b':        { quality: 7.0, successRate: 0.90, latencyAvg: 2500 },
-    'lfm/lfm2.5-1.2b-instruct':          { quality: 5.0, successRate: 0.95, latencyAvg: 500  },
-    'lfm/lfm2.5-1.2b-thinking':          { quality: 6.5, successRate: 0.93, latencyAvg: 1000 },
-    'minimax/m2.5':                      { quality: 7.5, successRate: 0.88, latencyAvg: 3500 },
-    'nvidia/nemotron-embed-vl-1b':       { quality: 5.0, successRate: 0.95, latencyAvg: 400  },
-    'nvidia/nemotron-3-super':           { quality: 8.0, successRate: 0.89, latencyAvg: 5000 },
-    'google/gemma-4-31b':                { quality: 8.5, successRate: 0.91, latencyAvg: 3500 },
-    'google/gemma-4-26b':                { quality: 8.0, successRate: 0.91, latencyAvg: 3000 },
-    'elephant':                          { quality: 6.0, successRate: 0.85, latencyAvg: 3000 },
+    // Fast
+    'meta-llama/llama-3.2-3b-instruct:free':           { quality: 6.0, successRate: 0.95, latencyAvg: 800  },
+    'meta-llama/llama-3.1-8b-instruct:free':            { quality: 6.5, successRate: 0.95, latencyAvg: 1000 },
+    'google/gemma-3-4b-it:free':                        { quality: 6.0, successRate: 0.94, latencyAvg: 900  },
+    'google/gemma-3n-e4b-it:free':                      { quality: 5.5, successRate: 0.94, latencyAvg: 700  },
+    'qwen/qwen3-8b:free':                               { quality: 6.5, successRate: 0.93, latencyAvg: 1000 },
+    // Balanced
+    'meta-llama/llama-3.3-70b-instruct:free':           { quality: 8.0, successRate: 0.93, latencyAvg: 3000 },
+    'google/gemma-3-12b-it:free':                       { quality: 7.0, successRate: 0.93, latencyAvg: 1800 },
+    'google/gemma-3-27b-it:free':                       { quality: 7.5, successRate: 0.92, latencyAvg: 2500 },
+    'qwen/qwen3-14b:free':                              { quality: 7.5, successRate: 0.92, latencyAvg: 2000 },
+    'qwen/qwen-2.5-72b-instruct:free':                  { quality: 8.0, successRate: 0.92, latencyAvg: 3000 },
+    'mistralai/mistral-small-3.2-24b-instruct:free':    { quality: 7.5, successRate: 0.91, latencyAvg: 2500 },
+    // Powerful
+    'qwen/qwen3-235b-a22b:free':                        { quality: 9.0, successRate: 0.90, latencyAvg: 6000 },
+    'qwen/qwen3-30b-a3b:free':                          { quality: 8.0, successRate: 0.91, latencyAvg: 3500 },
+    'deepseek/deepseek-chat-v3-0324:free':              { quality: 9.0, successRate: 0.91, latencyAvg: 5000 },
+    'nvidia/llama-3.1-nemotron-70b-instruct:free':      { quality: 8.5, successRate: 0.91, latencyAvg: 4000 },
+    // Reasoning
+    'deepseek/deepseek-r1:free':                        { quality: 9.5, successRate: 0.89, latencyAvg: 8000 },
+    'deepseek/deepseek-r1-0528:free':                   { quality: 9.5, successRate: 0.90, latencyAvg: 7000 },
+    // Coding
+    'qwen/qwen-2.5-coder-32b-instruct:free':            { quality: 9.0, successRate: 0.92, latencyAvg: 4000 },
+    // Vision
+    'meta-llama/llama-3.2-11b-vision-instruct:free':    { quality: 7.0, successRate: 0.91, latencyAvg: 3000 },
+    'qwen/qwen2.5-vl-7b-instruct:free':                 { quality: 7.0, successRate: 0.90, latencyAvg: 2500 },
 };
 
 class ModelScorer {

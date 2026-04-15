@@ -11,57 +11,58 @@ const DIVERSITY_THRESHOLD = 0.70; // Force rotation if one model used >70% of re
 // Task-type → candidate models mapping
 const CANDIDATES = {
     simple: [
-        'meta-llama/llama-3.3-70b-instruct',
-        'google/gemma-3-27b',
-        'openai/gpt-oss-20b',
-        'google/gemma-3-12b',
-        'google/gemma-3-4b',
-        'meta-llama/llama-3.2-3b-instruct',
+        'meta-llama/llama-3.3-70b-instruct:free',
+        'google/gemma-3-27b-it:free',
+        'qwen/qwen-2.5-72b-instruct:free',
+        'google/gemma-3-12b-it:free',
+        'qwen/qwen3-14b:free',
+        'meta-llama/llama-3.1-8b-instruct:free',
+        'meta-llama/llama-3.2-3b-instruct:free',
     ],
     reasoning: [
-        'nous/hermes-3-405b',
-        'qwen/qwen3-next-80b',
-        'openai/gpt-oss-120b',
-        'lfm/lfm2.5-1.2b-thinking',
-        'meta-llama/llama-3.3-70b-instruct',
-        'nvidia/nemotron-3-super',
+        'deepseek/deepseek-r1-0528:free',
+        'deepseek/deepseek-r1:free',
+        'qwen/qwen3-235b-a22b:free',
+        'qwen/qwen3-30b-a3b:free',
+        'nvidia/llama-3.1-nemotron-70b-instruct:free',
+        'meta-llama/llama-3.3-70b-instruct:free',
     ],
     coding: [
-        'qwen/qwen3-coder-480b',
-        'openai/gpt-oss-120b',
-        'openai/gpt-oss-20b',
-        'meta-llama/llama-3.3-70b-instruct',
-        'nous/hermes-3-405b',
+        'qwen/qwen-2.5-coder-32b-instruct:free',
+        'qwen/qwen3-235b-a22b:free',
+        'deepseek/deepseek-chat-v3-0324:free',
+        'meta-llama/llama-3.3-70b-instruct:free',
+        'qwen/qwen3-30b-a3b:free',
     ],
     creative: [
-        'google/gemma-4-31b',
-        'minimax/m2.5',
-        'z-ai/glm-4.5-air',
-        'nous/hermes-3-405b',
-        'meta-llama/llama-3.3-70b-instruct',
-        'google/gemma-4-26b',
+        'qwen/qwen3-235b-a22b:free',
+        'deepseek/deepseek-chat-v3-0324:free',
+        'mistralai/mistral-small-3.2-24b-instruct:free',
+        'meta-llama/llama-3.3-70b-instruct:free',
+        'google/gemma-3-27b-it:free',
     ],
     analysis: [
-        'nous/hermes-3-405b',
-        'openai/gpt-oss-120b',
-        'meta-llama/llama-3.3-70b-instruct',
-        'qwen/qwen3-next-80b',
-        'google/gemma-4-31b',
+        'deepseek/deepseek-chat-v3-0324:free',
+        'qwen/qwen3-235b-a22b:free',
+        'nvidia/llama-3.1-nemotron-70b-instruct:free',
+        'meta-llama/llama-3.3-70b-instruct:free',
+        'qwen/qwen-2.5-72b-instruct:free',
     ],
     vision: [
-        'nvidia/nemotron-nano-12b-vl',
-        'nvidia/nemotron-embed-vl-1b',
+        'meta-llama/llama-3.2-11b-vision-instruct:free',
+        'qwen/qwen2.5-vl-7b-instruct:free',
     ],
 };
 
-// Complexity modifiers — for high complexity, prefer larger models
+// Complexity modifiers
 const HIGH_COMPLEXITY_BOOST = new Set([
-    'nous/hermes-3-405b', 'qwen/qwen3-coder-480b', 'openai/gpt-oss-120b',
-    'qwen/qwen3-next-80b', 'google/gemma-4-31b', 'nvidia/nemotron-3-super',
+    'deepseek/deepseek-r1-0528:free', 'deepseek/deepseek-r1:free',
+    'qwen/qwen3-235b-a22b:free', 'deepseek/deepseek-chat-v3-0324:free',
+    'nvidia/llama-3.1-nemotron-70b-instruct:free', 'qwen/qwen-2.5-coder-32b-instruct:free',
 ]);
 const LOW_COMPLEXITY_PREFER = new Set([
-    'meta-llama/llama-3.2-3b-instruct', 'google/gemma-3-4b',
-    'google/gemma-3n-2b', 'lfm/lfm2.5-1.2b-instruct',
+    'meta-llama/llama-3.2-3b-instruct:free', 'meta-llama/llama-3.1-8b-instruct:free',
+    'google/gemma-3-4b-it:free', 'google/gemma-3n-e4b-it:free', 'qwen/qwen3-8b:free',
 ]);
 
 // Recent selection tracking for anti-overfitting (last 20 calls)
