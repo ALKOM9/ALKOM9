@@ -177,7 +177,17 @@ class AIAgent {
         }
     }
 
+    // Keep only system prompt + last N messages to avoid token limits
+    _trimMessages(messages, maxHistory = 6) {
+        const sys = messages.filter(m => m.role === 'system');
+        const rest = messages.filter(m => m.role !== 'system').slice(-maxHistory);
+        return [...sys, ...rest];
+    }
+
     async callAI(messages, useTools, maxTokens, isImage, chatId = '', userMessage = '') {
+        // Always trim to avoid token limit errors on all providers
+        const trimmedMessages = this._trimMessages(messages);
+
         // Priority 1: OpenRouter with intelligent routing
         if (this.openrouter) {
             try {
@@ -186,12 +196,12 @@ class AIAgent {
                 console.log(`  🧭 Route: ${routing.model.split('/')[1]} (${task.taskType}/${task.complexity}, conf=${routing.confidence}) — ${routing.reason}`);
 
                 const { response, modelsUsed, pattern, latencyMs, rawResp } = await orchestrator.execute(
-                    routing, messages, useTools ? TOOLS : [], maxTokens
+                    routing, trimmedMessages, useTools ? TOOLS : [], maxTokens
                 );
 
                 // Async evaluation + learning (non-blocking)
                 if (response) {
-                    evaluator.scoreAsync(response, messages, task, routing, latencyMs)
+                    evaluator.scoreAsync(response, trimmedMessages, task, routing, latencyMs)
                         .then(evalResult => {
                             if (evalResult) learner.update(routing.model, task.taskType, evalResult, latencyMs);
                         })
@@ -209,20 +219,11 @@ class AIAgent {
 
         // Priority 2: Groq
         if (this.groq) {
-            // Use fast 8b model by default; only upgrade to 70b for complex/long requests
             const needsPower = maxTokens > 800 || /נתח|השווה|כתוב חיבור|תרגם מסמך|ניתוח/.test(userMessage || '');
             const model = isImage ? 'llama-3.2-11b-vision-preview' : needsPower ? 'llama-3.3-70b-versatile' : 'llama-3.1-8b-instant';
             const FALLBACK = 'llama-3.1-8b-instant';
 
-            // Trim messages to fit within Groq's ~6000 TPM limit
-            const trimForGroq = (msgs) => {
-                // Keep system prompt + last 6 messages max
-                const sys = msgs.filter(m => m.role === 'system');
-                const rest = msgs.filter(m => m.role !== 'system').slice(-6);
-                return [...sys, ...rest];
-            };
-
-            const groqCall = async (m, msgs = messages) => {
+            const groqCall = async (m, msgs = trimmedMessages) => {
                 try {
                     return await this.groq.chat.completions.create({
                         model: m, messages: msgs,
@@ -234,9 +235,11 @@ class AIAgent {
                     const status = err?.status || err?.statusCode;
                     const code = err?.error?.code || err?.code;
                     if (status === 413 || (status === 429 && err?.message?.includes('tokens'))) {
-                        // Too large — trim history and retry with 70b (higher context)
-                        console.warn('  Groq: request too large, trimming history...');
-                        const trimmed = trimForGroq(msgs);
+                        // Still too large — trim further to last 4 messages and retry with 70b
+                        console.warn('  Groq: still too large, trimming harder...');
+                        const sys = msgs.filter(m => m.role === 'system');
+                        const rest = msgs.filter(m => m.role !== 'system').slice(-4);
+                        const trimmed = [...sys, ...rest];
                         if (trimmed.length < msgs.length) return groqCall('llama-3.3-70b-versatile', trimmed);
                         throw Object.assign(new Error('GROQ_LIMIT'), { code: 'GROQ_LIMIT' });
                     }
@@ -267,7 +270,7 @@ class AIAgent {
         // Priority 3: Claude (last resort)
         if (this.claude && !isImage) {
             try {
-                const resp = await this.claude.call(messages, useTools ? TOOLS : [], { maxTokens });
+                const resp = await this.claude.call(trimmedMessages, useTools ? TOOLS : [], { maxTokens });
                 return resp;
             } catch (err) {
                 const status = err?.status || err?.statusCode;

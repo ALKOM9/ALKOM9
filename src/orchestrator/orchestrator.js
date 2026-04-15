@@ -4,9 +4,9 @@
 const OpenRouterProvider = require('../providers/openrouter');
 const router = require('../router/router');
 
-// Pattern selection thresholds — Single is default for WhatsApp speed
-const SINGLE_CONF_THRESHOLD = 0.4;   // confidence > this → Single model
-const PARALLEL_CONF_THRESHOLD = 0.1; // confidence < this → Parallel+Vote (rare)
+// Pattern selection thresholds — Single is almost always used
+const SINGLE_CONF_THRESHOLD = 0.0;   // always try single first
+const PARALLEL_CONF_THRESHOLD = 0.0; // parallel disabled (causes crashes on free tier)
 
 class Orchestrator {
     constructor() {
@@ -31,14 +31,20 @@ class Orchestrator {
             throw new Error('Orchestrator: provider not set');
         }
 
-        if (confidence < PARALLEL_CONF_THRESHOLD || (complexity === 'medium' && confidence < 0.4)) {
-            result = await this._parallel(routing, messages, tools, maxTokens);
-        } else if (complexity === 'high' && taskType === 'reasoning') {
-            result = await this._plannerExecutorCritic(routing, messages, tools, maxTokens);
-        } else if (taskType === 'creative' && complexity !== 'low') {
-            result = await this._draftReviewImprove(routing, messages, tools, maxTokens);
-        } else {
-            result = await this._single(routing, messages, tools, maxTokens);
+        // Always try Single first — fast and reliable on free-tier models
+        // Only use multi-step patterns for high-complexity tasks
+        try {
+            if (complexity === 'high' && taskType === 'reasoning' && confidence > 0.3) {
+                result = await this._plannerExecutorCritic(routing, messages, tools, maxTokens);
+            } else if (taskType === 'creative' && complexity === 'high' && confidence > 0.3) {
+                result = await this._draftReviewImprove(routing, messages, tools, maxTokens);
+            } else {
+                result = await this._single(routing, messages, tools, maxTokens);
+            }
+        } catch (err) {
+            // Any pattern failure → fall back to single with primary model
+            console.warn(`  Orchestrator pattern failed (${err.message}), retrying as single...`);
+            result = await this._single(routing, messages, [], maxTokens);
         }
 
         return { ...result, latencyMs: Date.now() - start };
