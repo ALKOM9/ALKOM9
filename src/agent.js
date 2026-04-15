@@ -214,10 +214,18 @@ class AIAgent {
             const model = isImage ? 'llama-3.2-11b-vision-preview' : needsPower ? 'llama-3.3-70b-versatile' : 'llama-3.1-8b-instant';
             const FALLBACK = 'llama-3.1-8b-instant';
 
-            const groqCall = async (m) => {
+            // Trim messages to fit within Groq's ~6000 TPM limit
+            const trimForGroq = (msgs) => {
+                // Keep system prompt + last 6 messages max
+                const sys = msgs.filter(m => m.role === 'system');
+                const rest = msgs.filter(m => m.role !== 'system').slice(-6);
+                return [...sys, ...rest];
+            };
+
+            const groqCall = async (m, msgs = messages) => {
                 try {
                     return await this.groq.chat.completions.create({
-                        model: m, messages,
+                        model: m, messages: msgs,
                         tools: useTools && !isImage ? TOOLS : undefined,
                         tool_choice: useTools && !isImage ? 'auto' : undefined,
                         max_tokens: maxTokens, temperature: 0.7
@@ -225,13 +233,19 @@ class AIAgent {
                 } catch (err) {
                     const status = err?.status || err?.statusCode;
                     const code = err?.error?.code || err?.code;
-                    if (status === 429 && m === FALLBACK) {
-                        // Groq daily limit hit — fall through to Claude
+                    if (status === 413 || (status === 429 && err?.message?.includes('tokens'))) {
+                        // Too large — trim history and retry with 70b (higher context)
+                        console.warn('  Groq: request too large, trimming history...');
+                        const trimmed = trimForGroq(msgs);
+                        if (trimmed.length < msgs.length) return groqCall('llama-3.3-70b-versatile', trimmed);
                         throw Object.assign(new Error('GROQ_LIMIT'), { code: 'GROQ_LIMIT' });
                     }
-                    if (status === 429) return groqCall(FALLBACK);
+                    if (status === 429 && m === FALLBACK) {
+                        throw Object.assign(new Error('GROQ_LIMIT'), { code: 'GROQ_LIMIT' });
+                    }
+                    if (status === 429) return groqCall(FALLBACK, msgs);
                     if (useTools && (code === 'tool_use_failed' || status === 400)) {
-                        return this.groq.chat.completions.create({ model: m, messages, max_tokens: maxTokens, temperature: 0.7 });
+                        return this.groq.chat.completions.create({ model: m, messages: msgs, max_tokens: maxTokens, temperature: 0.7 });
                     }
                     throw err;
                 }
