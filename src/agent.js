@@ -85,6 +85,7 @@ class AIAgent {
         this.cache = new Map(); // {key: {result, exp}}
         this.usingFallback = false;
         this.openrouter = openrouterKey ? new OpenRouterProvider(openrouterKey) : null;
+        this.orBlacklist = new Set(); // Models that returned 404 "No endpoints found" this session
         // Inject provider into singletons
         if (this.openrouter) {
             orchestrator.setProvider(this.openrouter);
@@ -203,6 +204,11 @@ class AIAgent {
             const modelsToTry = [routing.model, ...(routing.alternatives || [])].slice(0, 3);
 
             for (const model of modelsToTry) {
+                // Skip models blacklisted this session (404 "No endpoints found for X")
+                if (this.orBlacklist.has(model)) {
+                    console.log(`  ⏭️  Skip ${model.split('/')[1]} (session blacklist)`);
+                    continue;
+                }
                 try {
                     console.log(`  🧭 Route: ${model.split('/')[1]} (${task.taskType}/${task.complexity}, conf=${routing.confidence})`);
                     const fakeRouting = { ...routing, model };
@@ -222,14 +228,27 @@ class AIAgent {
                     if (rawResp?.choices) return rawResp;
                     return { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: response, tool_calls: undefined } }] };
                 } catch (err) {
-                    // Only auth failure (401) is a hard error — all other errors try next model
                     if (err.status === 401) {
                         console.warn(`  OpenRouter: auth failure — stopping OpenRouter`);
                         break;
                     }
+                    // Model doesn't exist in this account → blacklist for session + penalize
+                    const isModelMissing = err.status === 404 && err.message?.includes('No endpoints found for');
+                    if (isModelMissing) {
+                        this.orBlacklist.add(model);
+                        console.warn(`  OpenRouter: ${model.split('/')[1]} not in account — blacklisted`);
+                        try { learner.update(model, task.taskType, { score: 0, failed: true }, 30000); } catch (_) {}
+                        continue;
+                    }
+                    // Rate limited (429) → skip, but DON'T penalize quality score
+                    const isRateLimited = err.status === 429 || err.message?.includes('429');
+                    if (isRateLimited) {
+                        console.warn(`  OpenRouter: ${model.split('/')[1]} rate-limited, trying next...`);
+                        continue;
+                    }
+                    // Other errors (tool-support 404, 5xx, timeout) → skip + mild penalize
                     console.warn(`  OpenRouter: ${model.split('/')[1]} error (${err.status || err.code || err.name}), trying next...`);
-                    // Penalize failing model so router learns to avoid it
-                    try { learner.update(model, task.taskType, { score: 0, failed: true }, 30000); } catch (_) {}
+                    try { learner.update(model, task.taskType, { score: 2, failed: false }, 30000); } catch (_) {}
                     continue;
                 }
             }

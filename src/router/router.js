@@ -9,16 +9,14 @@ const EPSILON = 0.1; // 10% exploration rate
 const DIVERSITY_THRESHOLD = 0.70; // Force rotation if one model used >70% of recent calls
 
 // Task-type → candidate models mapping
-// ⚠️  Only include models confirmed available on OpenRouter free tier with tool support.
-//     Gemma models (gemma-3-*) exist but do NOT support tool use — excluded from all lists.
-//     Models giving "No endpoints found" are removed entirely.
+// ⚠️  Conservative list — only models confirmed working on OpenRouter free tier.
+//     Models giving "No endpoints found for X" are auto-blacklisted by agent.js at runtime.
+//     Keeping 3 candidates per task type: if all fail → Groq handles it fine.
 const CANDIDATES = {
     simple: [
-        'meta-llama/llama-3.3-70b-instruct:free',   // reliable, supports tools
-        'meta-llama/llama-3.1-8b-instruct:free',     // fast, supports tools
-        'deepseek/deepseek-chat-v3-0324:free',        // high quality
-        'qwen/qwen3-30b-a3b:free',                   // solid fallback
-        'meta-llama/llama-3.2-3b-instruct:free',     // smallest/fastest
+        'meta-llama/llama-3.3-70b-instruct:free',
+        'deepseek/deepseek-chat-v3-0324:free',
+        'qwen/qwen3-235b-a22b:free',
     ],
     reasoning: [
         'deepseek/deepseek-r1-0528:free',
