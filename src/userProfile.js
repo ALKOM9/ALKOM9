@@ -132,7 +132,7 @@ class UserProfile {
             if (!profile.reminders) continue;
             for (const r of profile.reminders) {
                 if (!r.sent && r.timestamp <= now) {
-                    pending.push({ chatId, ...r });
+                    pending.push({ chatId, reminder: r });
                 }
             }
         }
@@ -143,7 +143,7 @@ class UserProfile {
         const profile = this.get(chatId);
         if (!profile.reminders) return;
         for (const r of profile.reminders) {
-            if (r.timestamp === timestamp) r.sent = true;
+            if (r.timestamp === timestamp) { r.sent = true; break; }
         }
         this.save();
     }

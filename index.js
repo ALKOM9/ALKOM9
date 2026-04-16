@@ -41,7 +41,7 @@ async function main() {
             for (const { chatId, reminder } of pending) {
                 try {
                     await whatsapp.client.sendMessage(chatId, `⏰ תזכורת: ${reminder.text}`);
-                    agent.profiles.markReminderSent(chatId, reminder.id);
+                    agent.profiles.markReminderSent(chatId, reminder.timestamp);
                 } catch (e) {
                     console.error('שגיאה בשליחת תזכורת:', e.message);
                 }

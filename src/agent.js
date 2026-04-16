@@ -149,6 +149,11 @@ class AIAgent {
 
         const rawText = response.choices[0]?.message?.content?.trim() || '';
         const responseText = rawText
+            // Strip DeepSeek R1 / Qwen3 thinking blocks (reasoning that leaks to user)
+            .replace(/<think>[\s\S]*?<\/think>/gi, '')
+            // Strip unclosed <think> (model started reasoning but didn't close the tag)
+            .replace(/<think>[\s\S]*/gi, '')
+            // Strip function call artifacts
             .replace(/<function=[^>]*>[\s\S]*?<\/function>/g, '')
             .replace(/<function=[^\s>]*\s*\{[\s\S]*?\}\s*>/g, '')
             .replace(/<function=[^\s>]*>/g, '')
