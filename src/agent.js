@@ -11,6 +11,7 @@ const { convertUnits, generatePassword, encodeDecodeBase64, convertNumber, conve
 const { getTrivia, getFortune, getSongGuess, getStoryNode, getDailyJoke } = require('./tools/games');
 const { getTechnicalAnalysis, getStockrowData } = require('./tools/technicals');
 const OpenRouterProvider = require('./providers/openrouter');
+const OpenAIProvider = require('./providers/openai');
 const contextManager = require('./contextManager');
 const { classify: classifyTask } = require('./router/taskClassifier');
 const { select: routerSelect } = require('./router/router');
@@ -86,9 +87,10 @@ const GROQ_TOOLS = TOOLS.filter(t => [
 ].includes(t.function.name));
 
 class AIAgent {
-    constructor(anthropicKey, groqKey, openrouterKey) {
+    constructor(anthropicKey, groqKey, openrouterKey, openaiKey) {
         this.claude = anthropicKey ? new ClaudeProvider(anthropicKey) : null;
         this.groq = groqKey ? new Groq({ apiKey: groqKey }) : null;
+        this.openai = openaiKey ? new OpenAIProvider(openaiKey) : null;
         this.memory = new ConversationMemory();
         this.profiles = new UserProfile();
         this.requestQueue = new Map();
@@ -216,7 +218,44 @@ class AIAgent {
         // Always trim to avoid token limit errors on all providers
         const trimmedMessages = this._trimMessages(messages);
 
-        // Priority 1: OpenRouter with intelligent routing + model fallback on 429
+        // Priority 1: OpenAI — GPT-5 (primary model)
+        if (this.openai) {
+            try {
+                const start = Date.now();
+                const rawResp = await this.openai.call(
+                    trimmedMessages,
+                    useTools ? TOOLS : [],
+                    { maxTokens }
+                );
+                const latencyMs = Date.now() - start;
+                const model = this.openai.activeModel;
+                console.log(`  🤖 OpenAI [${model}]: ${latencyMs}ms`);
+                this.usingFallback = false;
+
+                // Handle tool calls (same format as OpenRouter/Claude)
+                const choice = rawResp.choices[0];
+                if (choice?.finish_reason === 'tool_calls' || choice?.message?.tool_calls?.length) {
+                    return rawResp;
+                }
+
+                const response = choice?.message?.content || '';
+                return { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: response, tool_calls: undefined } }] };
+            } catch (err) {
+                const status = err.status;
+                if (status === 401) {
+                    console.error('  OpenAI: invalid API key — skipping OpenAI');
+                } else if (status === 429) {
+                    console.warn('  OpenAI: rate-limited, falling back...');
+                } else if (status === 413 || err.message?.includes('context_length')) {
+                    console.warn('  OpenAI: context too long, falling back...');
+                } else {
+                    console.warn(`  OpenAI: error (${status || err.code || err.name}), falling back...`);
+                }
+                // Fall through to OpenRouter
+            }
+        }
+
+        // Priority 2: OpenRouter with intelligent routing + model fallback on 429
         if (this.openrouter) {
             const task = classifyTask(userMessage, isImage);
             const routing = routerSelect(task);
@@ -279,7 +318,7 @@ class AIAgent {
             this.usingFallback = true;
         }
 
-        // Priority 2: Groq
+        // Priority 3: Groq
         if (this.groq) {
             const needsPower = maxTokens > 800 || /נתח|השווה|כתוב חיבור|תרגם מסמך|ניתוח/.test(userMessage || '');
             const model = isImage ? 'llama-3.2-11b-vision-preview' : needsPower ? 'llama-3.3-70b-versatile' : 'llama-3.1-8b-instant';
@@ -329,7 +368,7 @@ class AIAgent {
             }
         }
 
-        // Priority 3: Claude (last resort)
+        // Priority 4: Claude (last resort)
         if (this.claude && !isImage) {
             try {
                 const resp = await this.claude.call(trimmedMessages, useTools ? TOOLS : [], { maxTokens });

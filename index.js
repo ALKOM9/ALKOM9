@@ -7,11 +7,12 @@ const ADMIN = process.env.ADMIN_NUMBER ? `${process.env.ADMIN_NUMBER.replace(/\D
 
 async function main() {
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    const groqKey = process.env.GROQ_API_KEY;
+    const groqKey     = process.env.GROQ_API_KEY;
+    const openaiKey   = process.env.OPENAI_API_KEY;
 
-    if (!anthropicKey && (!groqKey || groqKey === 'your_api_key_here')) {
+    if (!openaiKey && !anthropicKey && (!groqKey || groqKey === 'your_api_key_here')) {
         console.error('\nERROR: No API keys found!');
-        console.error('Set ANTHROPIC_API_KEY or GROQ_API_KEY in .env\n');
+        console.error('Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GROQ_API_KEY in .env\n');
         process.exit(1);
     }
 
@@ -20,7 +21,12 @@ async function main() {
     console.log('\n' + '='.repeat(55));
     console.log('  Aylin WhatsApp AI');
     console.log('='.repeat(55));
-    if (openrouterKey) {
+    if (openaiKey) {
+        console.log('  Primary AI:  OpenAI GPT-5');
+        if (openrouterKey) console.log('  Fallback #1: OpenRouter (free models)');
+        if (groqKey)       console.log(`  Fallback #${openrouterKey ? 2 : 1}: Groq`);
+        if (anthropicKey)  console.log(`  Fallback #${openrouterKey ? 3 : 2}: Claude`);
+    } else if (openrouterKey) {
         console.log('  Primary AI:  OpenRouter (intelligent routing)');
         console.log('  Fallback #1: Groq');
         if (anthropicKey) console.log('  Fallback #2: Claude');
@@ -31,7 +37,7 @@ async function main() {
         console.log('  Primary AI:  Groq');
     }
     console.log('='.repeat(55) + '\n');
-    const agent = new AIAgent(anthropicKey, groqKey, openrouterKey);
+    const agent = new AIAgent(anthropicKey, groqKey, openrouterKey, openaiKey);
     const whatsapp = new WhatsAppClient(agent);
 
     // Reminder worker — check every 60 seconds
