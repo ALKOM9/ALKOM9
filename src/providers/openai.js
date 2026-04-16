@@ -50,9 +50,12 @@ class OpenAIProvider {
             err.status = res.status;
 
             // gpt-5 not yet available on this account → fall back to gpt-4o silently
-            if (res.status === 404 && model === PRIMARY_MODEL) {
+            // OpenAI returns 404 or 400 for unknown/inaccessible models
+            const modelNotFound = (res.status === 404 || res.status === 400) && model === PRIMARY_MODEL
+                && (errText.includes('model') || errText.includes('does not exist') || errText.includes('invalid'));
+            if (modelNotFound) {
                 this._gpt5Available = false;
-                console.warn('  OpenAI: gpt-5 not available, falling back to gpt-4o');
+                console.warn(`  OpenAI: ${PRIMARY_MODEL} not available (${res.status}), falling back to ${FALLBACK_MODEL}`);
                 return this.call(messages, tools, { ...opts, model: FALLBACK_MODEL });
             }
 

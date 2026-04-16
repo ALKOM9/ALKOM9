@@ -249,7 +249,7 @@ class AIAgent {
                 } else if (status === 413 || err.message?.includes('context_length')) {
                     console.warn('  OpenAI: context too long, falling back...');
                 } else {
-                    console.warn(`  OpenAI: error (${status || err.code || err.name}), falling back...`);
+                    console.warn(`  OpenAI: error (${status || err.code || err.name}) — ${err.message?.slice(0, 120)}, falling back...`);
                 }
                 // Fall through to OpenRouter
             }
