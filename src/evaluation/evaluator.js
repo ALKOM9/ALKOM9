@@ -1,9 +1,8 @@
 // Evaluator — async response quality scorer using a judge model
 // Does NOT block user response (fire-and-forget pattern)
-// Judge model: meta-llama/llama-3.3-70b-instruct (fast, reliable, free)
+// Judge: Groq llama-3.1-8b (fast, separate quota from OpenRouter — saves OR req/day)
 
-const JUDGE_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
-const JUDGE_TIMEOUT = 15000;
+const JUDGE_TIMEOUT = 10000;
 
 const RUBRIC_PROMPT = `You are an AI response quality judge. Score the assistant response below on a scale of 0-10 for each criterion.
 
@@ -18,17 +17,22 @@ Return ONLY valid JSON, no explanation:
 
 class Evaluator {
     constructor() {
-        this.openrouter = null; // Injected after init to avoid circular deps
+        this.groq = null;       // Preferred judge (separate quota from OR)
+        this.openrouter = null; // Fallback judge
     }
 
-    // Inject provider after construction
+    // Inject providers after construction
     setProvider(openrouterProvider) {
         this.openrouter = openrouterProvider;
     }
 
+    setGroq(groqProvider) {
+        this.groq = groqProvider;
+    }
+
     // Score a response asynchronously (returns Promise — caller should not await if non-blocking)
     async scoreAsync(response, originalMessages, task, routing, latencyMs) {
-        if (!this.openrouter) return null;
+        if (!this.groq && !this.openrouter) return null;
         if (!response || response.length < 10) {
             return { score: 1, breakdown: { accuracy: 1, relevance: 1, completeness: 1, helpfulness: 1 }, failed: true };
         }
@@ -44,13 +48,38 @@ class Evaluator {
             { role: 'user', content: `Question: ${userText}\n\nAssistant response:\n${response.slice(0, 800)}` }
         ];
 
+        // Try Groq first (doesn't consume OR quota), fall back to OR if Groq unavailable
+        const callJudge = async () => {
+            if (this.groq) {
+                try {
+                    const Groq = require('groq-sdk');
+                    const completion = await this.groq.chat.completions.create({
+                        model: 'llama-3.1-8b-instant',
+                        messages: judgeMessages,
+                        max_tokens: 100,
+                        temperature: 0.1,
+                    });
+                    return completion.choices[0]?.message?.content?.trim() || '';
+                } catch (_) {
+                    // Groq failed — try OR fallback
+                }
+            }
+            if (this.openrouter) {
+                const result = await this.openrouter.call(judgeMessages, [], {
+                    model: 'meta-llama/llama-3.3-70b-instruct:free',
+                    maxTokens: 100,
+                });
+                return result.choices[0]?.message?.content?.trim() || '';
+            }
+            throw new Error('No judge provider available');
+        };
+
         try {
-            const result = await Promise.race([
-                this.openrouter.call(judgeMessages, [], { model: JUDGE_MODEL, maxTokens: 100 }),
+            const text = await Promise.race([
+                callJudge(),
                 new Promise((_, rej) => setTimeout(() => rej(new Error('judge timeout')), JUDGE_TIMEOUT)),
             ]);
 
-            const text = result.choices[0]?.message?.content?.trim() || '';
             const jsonMatch = text.match(/\{[^}]+\}/);
             if (!jsonMatch) return null;
 

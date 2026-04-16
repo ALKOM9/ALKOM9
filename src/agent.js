@@ -101,6 +101,10 @@ class AIAgent {
             orchestrator.setProvider(this.openrouter);
             evaluator.setProvider(this.openrouter);
         }
+        // Evaluator uses Groq as judge (saves OR quota), falls back to OR if needed
+        if (this.groq) {
+            evaluator.setGroq(this.groq);
+        }
     }
 
     async chat(chatId, userMessage, imageData = null) {
@@ -263,8 +267,11 @@ class AIAgent {
                         continue;
                     }
                     // Other errors (tool-support 404, 5xx, timeout) → skip + mild penalize
+                    // openrouter/free is a meta-router — never penalize it for transient errors
                     console.warn(`  OpenRouter: ${model.split('/')[1]} error (${err.status || err.code || err.name}), trying next...`);
-                    try { learner.update(model, task.taskType, { score: 2, failed: false }, 30000); } catch (_) {}
+                    if (model !== 'openrouter/free') {
+                        try { learner.update(model, task.taskType, { score: 2, failed: false }, 30000); } catch (_) {}
+                    }
                     continue;
                 }
             }
