@@ -4,8 +4,8 @@
 const BASE_URL = 'https://api.openai.com/v1/chat/completions';
 const TIMEOUT_MS = 30000;
 
-const PRIMARY_MODEL   = 'gpt-5';
-const FALLBACK_MODEL  = 'gpt-4o'; // if gpt-5 not yet on account
+const PRIMARY_MODEL   = 'gpt-5.1';
+const FALLBACK_MODEL  = 'gpt-4o'; // if gpt-5.1 not yet on account
 
 class OpenAIProvider {
     constructor(apiKey) {
