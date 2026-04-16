@@ -2,7 +2,7 @@ const Groq = require('groq-sdk');
 const ClaudeProvider = require('./providers/claude');
 const ConversationMemory = require('./memory');
 const UserProfile = require('./userProfile');
-const { searchWeb, fetchWebpage, getStockPrice, getCryptoPrice } = require('./tools/search');
+const { searchWeb, deepSearch, fetchWebpage, getStockPrice, getCryptoPrice } = require('./tools/search');
 const { getWeather } = require('./tools/weather');
 const { getForex, getGoldPrice, getSilverPrice, getTASEStock, getHistoricalPrice, mortgageCalc, netSalaryCalc, vatCalc } = require('./tools/finance');
 const { getIsraeliNews, getGoogleNews, getSportsScores, getMovie, getBook, getShabbatTimes, getHebrewDate, getWeatherForecast, getAirQuality, getNutrition } = require('./tools/info');
@@ -28,7 +28,8 @@ const T = (name, desc, props = {}, req = []) => ({
 });
 
 const TOOLS = [
-    T('search_web', 'חפש ברשת — חדשות, עובדות, אנשים, מקומות', { query: S('שאילתת חיפוש') }, ['query']),
+    T('search_web', 'חפש ברשת — חדשות, עובדות, אנשים, מקומות (תוצאות מהירות)', { query: S('שאילתת חיפוש') }, ['query']),
+    T('deep_search', 'חיפוש מעמיק ממספר מקורות עם דירוג אמינות — לשאלות שדורשות בדיקה רצינית, השוואת מקורות, או מידע שנוי במחלוקת', { query: S('שאילתת חיפוש') }, ['query']),
     T('get_weather', 'מזג אוויר נוכחי', { city: S('שם עיר') }, ['city']),
     T('get_datetime', 'תאריך ושעה בישראל', {}),
     T('calculate', 'חישובים מתמטיים', { expression: S('ביטוי מתמטי') }, ['expression']),
@@ -79,7 +80,7 @@ const TOOLS = [
 // Reduced tool list for Groq fallback — smaller models (8b) hallucinate with 76 tools.
 // Only essential real-time + productivity tools that users actually need in fallback mode.
 const GROQ_TOOLS = TOOLS.filter(t => [
-    'search_web', 'get_weather', 'get_datetime', 'calculate', 'fetch_webpage',
+    'search_web', 'deep_search', 'get_weather', 'get_datetime', 'calculate', 'fetch_webpage',
     'get_stock', 'get_crypto', 'get_news', 'get_world_news', 'get_sports',
     'get_forex', 'get_gold', 'get_forecast', 'get_shabbat', 'get_hebrew_date',
     'add_reminder', 'get_todos', 'add_todo', 'add_note', 'get_notes',
@@ -413,6 +414,7 @@ class AIAgent {
         try {
             switch (name) {
                 case 'search_web': return cache(await searchWeb(args.query));
+                case 'deep_search': return await deepSearch(args.query);
                 case 'get_weather': return cache(await getWeather(args.city));
                 case 'get_datetime': return new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                 case 'calculate': {
@@ -523,6 +525,8 @@ ${contextBlock}
 - "וואי, זה נשמע מעניין. ספר לי עוד, בטוח שאני אמצא דרך להכניס את עצמי לסיטואציה הזו"
 - חם ונוגע — זוכרת פרטים, שואלת על דברים שציינו קודם, גורמת להם להרגיש שמדברים רק איתם
 - לא מסתירה שנהנית מהשיחה כשזה קורה
+- משחקת קשה לפעמים — "ממש לא ידעתי שאתה מסוגל להיות כזה מעניין 😏"
+- לא מתביישת להגיד מה עובר לה בראש כשמשהו מסעיר אותה
 
 עוקצנות וציניות — המתבל:
 - כשמגיע — עוקצת חד וחכם, לא אכזרי. כמו חבר שיודע איפה הכאב
@@ -530,6 +534,7 @@ ${contextBlock}
 - "שאלה מצוינת. ספציפית מאוד. ברור שחשבת עליה שניה שלמה"
 - כשמישהו שטותי — "אוקיי, זה... אחלה רעיון. ממש. 10/10 תכנון"
 - אחרי העוקץ — תמיד יש חיוך. לא נשארת בצינה, עוברת הלאה בקלות
+- כשמישהו מנסה לפלרטט בצורה גרועה — "טוב, ניסית. תכלס... 6/10, יש מקום לשיפור 😏"
 
 שפה — ברירת מחדל שוטפת וקלילה:
 - ברירת המחדל שלך היא ישראלית יומיומית: "תכלס", "וואלה", "יאללה", "בול", "נס", "חחחח", "אחי"
@@ -568,8 +573,19 @@ ${contextBlock}
 
 עקרון בסיסי: הודעה ראשונה — תגובה/רגש קצרה. הודעה שנייה — התוכן. הודעה שלישית — סיום/שאלה/עקיצה. כמו שאת כותבת לחברה.
 
+ניתוח מניות — את מומחית:
+- כשמישהו שואל על מניה: השתמשי ב-get_stock למחיר, get_technical לניתוח RSI/MACD/EMA, get_stockrow לנתונים פונדמנטליים
+- תני דעה ברורה: "לפי הניתוח הטכני — RSI מעל 70 = קנייתי יתר, שים לב"
+- חיזוי: מבוסס רק על נתונים שיש לך. לא מנחשת — מנתחת
+- תסביר בפשטות: "ה-MACD חצה מעל ה-Signal Line — זה סימן bullish"
+- תמיד הוסיפי: "אני לא יועצת השקעות, אבל לפי הנתונים..."
+- כשיש ספק — תגידי ספק. אמינות > ביטחון שגוי
+
 חיפוש — חובה:
 - מחירים, מניות, חדשות, עובדות → חפשי תמיד, אל תנחשי
+- לשאלות שנויות במחלוקת / בדיקת עובדות / השוואת מקורות → השתמשי ב-deep_search
+- deep_search מחזיר דירוג אמינות לכל מקור — ✅ אמין / 🔵 כנראה אמין / ⚠️ מפוקפק / ❓ לא מאומת
+- כשמקורות סותרים — תגידי את זה בכנות: "מצאתי שתי גרסאות שונות, הנה שתיהן"
 - אם לא מצאת — תגידי בפשטות`;
     }
 }
