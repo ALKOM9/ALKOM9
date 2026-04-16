@@ -299,8 +299,19 @@ class WhatsAppClient {
             if (i > 0) {
                 // Show typing indicator between messages
                 try { await chat.sendStateTyping(); } catch (_) {}
-                // Delay: ~40ms per character, between 600ms and 3000ms
-                const delay = Math.min(3000, Math.max(600, part.length * 40));
+
+                // Human-like typing delay based on message length:
+                // Short reaction (≤15 chars): 600-1200ms — fast, like a quick thought
+                // Medium (16-60 chars): 1200-2800ms — normal typing speed
+                // Long (>60 chars): 2800-4500ms — actually composing something
+                // Add ±300ms jitter so it never feels perfectly mechanical
+                const len = part.length;
+                let base;
+                if (len <= 15)      base = 600  + len * 30;
+                else if (len <= 60) base = 1200 + (len - 15) * 35;
+                else                base = 2800 + Math.min((len - 60) * 25, 1700);
+                const jitter = Math.floor(Math.random() * 600) - 300;
+                const delay = Math.max(500, base + jitter);
                 await new Promise(r => setTimeout(r, delay));
             }
             await msg.reply(part);
