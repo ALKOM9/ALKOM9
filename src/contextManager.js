@@ -112,7 +112,7 @@ ${dialogue}`
 
     // Get messages to keep in active history (last N turns, rest is summarized)
     trimHistory(history) {
-        if (history.length <= SUMMARIZE_THRESHOLD) return history;
+        if (history.length < SUMMARIZE_THRESHOLD) return history;
         // Keep last 8 messages (4 turns) in active context
         return history.slice(-8);
     }

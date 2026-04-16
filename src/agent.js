@@ -75,6 +75,16 @@ const TOOLS = [
     T('store_fact', 'שמור עובדה על המשתמש', { fact: S('עובדה') }, ['fact']),
 ];
 
+// Reduced tool list for Groq fallback — smaller models (8b) hallucinate with 76 tools.
+// Only essential real-time + productivity tools that users actually need in fallback mode.
+const GROQ_TOOLS = TOOLS.filter(t => [
+    'search_web', 'get_weather', 'get_datetime', 'calculate', 'fetch_webpage',
+    'get_stock', 'get_crypto', 'get_news', 'get_world_news', 'get_sports',
+    'get_forex', 'get_gold', 'get_forecast', 'get_shabbat', 'get_hebrew_date',
+    'add_reminder', 'get_todos', 'add_todo', 'add_note', 'get_notes',
+    'net_salary_calc', 'vat_calc', 'store_fact',
+].includes(t.function.name));
+
 class AIAgent {
     constructor(anthropicKey, groqKey, openrouterKey) {
         this.claude = anthropicKey ? new ClaudeProvider(anthropicKey) : null;
@@ -233,7 +243,8 @@ class AIAgent {
                         break;
                     }
                     // Model doesn't exist in this account → blacklist for session + penalize
-                    const isModelMissing = err.status === 404 && err.message?.includes('No endpoints found for');
+                    // openrouter/free is a router (not a specific model) — never blacklist it
+                    const isModelMissing = err.status === 404 && err.message?.includes('No endpoints found for') && model !== 'openrouter/free';
                     if (isModelMissing) {
                         this.orBlacklist.add(model);
                         console.warn(`  OpenRouter: ${model.split('/')[1]} not in account — blacklisted`);
@@ -266,7 +277,7 @@ class AIAgent {
                 try {
                     return await this.groq.chat.completions.create({
                         model: m, messages: msgs,
-                        tools: useTools && !isImage ? TOOLS : undefined,
+                        tools: useTools && !isImage ? GROQ_TOOLS : undefined,
                         tool_choice: useTools && !isImage ? 'auto' : undefined,
                         max_tokens: maxTokens, temperature: 0.7
                     });

@@ -2,6 +2,9 @@
 // Returns OpenAI-compatible responses (OpenRouter already speaks OpenAI format)
 
 const ALLOWED_MODELS = new Set([
+    // OpenRouter built-in free router — auto-picks best available free model,
+    // intelligently filters for tool calling support. Use this as primary.
+    'openrouter/free',
     // Fast / Small
     'meta-llama/llama-3.2-3b-instruct:free',
     'meta-llama/llama-3.1-8b-instruct:free',

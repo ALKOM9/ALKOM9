@@ -9,45 +9,44 @@ const EPSILON = 0.1; // 10% exploration rate
 const DIVERSITY_THRESHOLD = 0.70; // Force rotation if one model used >70% of recent calls
 
 // Task-type → candidate models mapping
-// ⚠️  Conservative list — only models confirmed working on OpenRouter free tier.
-//     Models giving "No endpoints found for X" are auto-blacklisted by agent.js at runtime.
-//     Keeping 3 candidates per task type: if all fail → Groq handles it fine.
+// openrouter/free = OpenRouter's built-in router that auto-picks the best available
+// free model for each request, filtered by feature support (tools, vision, etc.).
+// Always list it first — eliminates "No endpoints found for X" errors entirely.
 const CANDIDATES = {
     simple: [
+        'openrouter/free',
         'meta-llama/llama-3.3-70b-instruct:free',
         'deepseek/deepseek-chat-v3-0324:free',
-        'qwen/qwen3-235b-a22b:free',
     ],
     reasoning: [
+        'openrouter/free',
         'deepseek/deepseek-r1-0528:free',
         'deepseek/deepseek-r1:free',
         'qwen/qwen3-235b-a22b:free',
-        'qwen/qwen3-30b-a3b:free',
         'nvidia/llama-3.1-nemotron-70b-instruct:free',
         'meta-llama/llama-3.3-70b-instruct:free',
     ],
     coding: [
+        'openrouter/free',
         'qwen/qwen-2.5-coder-32b-instruct:free',
         'qwen/qwen3-235b-a22b:free',
         'deepseek/deepseek-chat-v3-0324:free',
         'meta-llama/llama-3.3-70b-instruct:free',
-        'qwen/qwen3-30b-a3b:free',
     ],
     creative: [
+        'openrouter/free',
         'qwen/qwen3-235b-a22b:free',
         'deepseek/deepseek-chat-v3-0324:free',
         'meta-llama/llama-3.3-70b-instruct:free',
-        'qwen/qwen3-30b-a3b:free',
-        'meta-llama/llama-3.1-8b-instruct:free',
     ],
     analysis: [
+        'openrouter/free',
         'deepseek/deepseek-chat-v3-0324:free',
         'qwen/qwen3-235b-a22b:free',
-        'nvidia/llama-3.1-nemotron-70b-instruct:free',
         'meta-llama/llama-3.3-70b-instruct:free',
-        'qwen/qwen3-30b-a3b:free',
     ],
     vision: [
+        'openrouter/free',
         'meta-llama/llama-3.2-11b-vision-instruct:free',
         'qwen/qwen2.5-vl-7b-instruct:free',
     ],
