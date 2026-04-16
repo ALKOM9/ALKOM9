@@ -10,6 +10,8 @@ const { parseIsraeliTime, formatCountdown } = require('./tools/productivity');
 const { convertUnits, generatePassword, encodeDecodeBase64, convertNumber, convertColor, numberToRoman, validateIBAN, urlEncodeDecode, convertTimezone } = require('./tools/utils');
 const { getTrivia, getFortune, getSongGuess, getStoryNode, getDailyJoke } = require('./tools/games');
 const { getTechnicalAnalysis, getStockrowData } = require('./tools/technicals');
+const FA = require('./tools/finance_analysis');
+const PT = require('./tools/prediction_tracker');
 const OpenRouterProvider = require('./providers/openrouter');
 const OpenAIProvider = require('./providers/openai');
 const contextManager = require('./contextManager');
@@ -75,6 +77,83 @@ const TOOLS = [
     T('get_story', 'סיפור אינטראקטיבי', { node_id: S('צומת') }),
     T('get_joke', 'בדיחה', {}),
     T('store_fact', 'שמור עובדה על המשתמש', { fact: S('עובדה') }, ['fact']),
+
+    // ── TECHNICAL INDICATORS ──────────────────────────────────────────────────
+    T('get_stochastic',         'Stochastic %K/%D — קנייה/מכירה יתר קצר טווח',                      { symbol: S('סימול') }, ['symbol']),
+    T('get_atr',                'ATR — תנודתיות יומית ממוצעת (Average True Range)',                   { symbol: S('סימול') }, ['symbol']),
+    T('get_adx',                'ADX — עוצמת טרנד + כיוון (DI+/DI-)',                                { symbol: S('סימול') }, ['symbol']),
+    T('get_cci',                'CCI — Commodity Channel Index (קנייה/מכירה יתר)',                    { symbol: S('סימול') }, ['symbol']),
+    T('get_williams_r',         'Williams %R — מומנטום קצר טווח',                                    { symbol: S('סימול') }, ['symbol']),
+    T('get_obv',                'OBV — On-Balance Volume, לחץ קנייה/מכירה',                           { symbol: S('סימול') }, ['symbol']),
+    T('get_fibonacci',          'Fibonacci — רמות תמיכה/התנגדות מ-52 שבועות',                        { symbol: S('סימול') }, ['symbol']),
+    T('get_support_resistance', 'רמות תמיכה והתנגדות מחישוב אוטומטי על היסטוריית מחירים',            { symbol: S('סימול') }, ['symbol']),
+    T('get_ma_cross',           'Golden Cross / Death Cross — MA50 vs MA200',                         { symbol: S('סימול') }, ['symbol']),
+    T('get_pivot_points',       'Pivot Points יומיים — P, S1-S3, R1-R3',                             { symbol: S('סימול') }, ['symbol']),
+    T('get_mfi',                'MFI — Money Flow Index (RSI + נפח)',                                 { symbol: S('סימול') }, ['symbol']),
+    T('get_52wk_analysis',      'ניתוח 52 שבועות — גבוה/נמוך, מיקום בטווח',                         { symbol: S('סימול') }, ['symbol']),
+    T('get_momentum',           'מומנטום מחיר — ROC ל-1/3/6/12 חודשים',                              { symbol: S('סימול') }, ['symbol']),
+    T('get_parabolic_sar',      'Parabolic SAR — זיהוי נקודות היפוך',                                { symbol: S('סימול') }, ['symbol']),
+    T('get_hist_volatility',    'תנודתיות היסטורית — HV20/60/252 (שנתית מנורמלת)',                   { symbol: S('סימול') }, ['symbol']),
+    T('get_ma_analysis',        'ממוצעים נעים — SMA20/50/100/200 vs מחיר נוכחי',                     { symbol: S('סימול') }, ['symbol']),
+
+    // ── FUNDAMENTAL ANALYSIS ──────────────────────────────────────────────────
+    T('get_valuation',          'שווי — P/E, P/B, P/S, EV/EBITDA, PEG',                              { symbol: S('סימול') }, ['symbol']),
+    T('get_earnings_date',      'תאריך דוח הבא + תחזית EPS/הכנסות',                                  { symbol: S('סימול') }, ['symbol']),
+    T('get_dividend',           'דיבידנד — תשואה, Payout Ratio, Ex-Date',                            { symbol: S('סימול') }, ['symbol']),
+    T('get_analyst_consensus',  'קונצנזוס אנליסטים — Buy/Sell/Hold + ציון ממוצע',                    { symbol: S('סימול') }, ['symbol']),
+    T('get_price_targets',      'יעדי מחיר אנליסטים — גבוה/ממוצע/נמוך + upside',                     { symbol: S('סימול') }, ['symbol']),
+    T('get_short_interest',     'Short Interest — % Float, Short Ratio, שינוי מחודש קודם',            { symbol: S('סימול') }, ['symbol']),
+    T('get_insider_activity',   'פעילות אינסיידרים — רכישות ומכירות של בעלי תפקידים',                { symbol: S('סימול') }, ['symbol']),
+    T('get_profitability',      'רווחיות — ROE, ROA, מרווחים (גולמי/תפעולי/נטו)',                    { symbol: S('סימול') }, ['symbol']),
+    T('get_liquidity',          'נזילות וחוב — Current Ratio, Quick Ratio, Debt/Equity',              { symbol: S('סימול') }, ['symbol']),
+    T('get_growth_rates',       'צמיחה — הכנסות/EPS YoY ו-QoQ',                                      { symbol: S('סימול') }, ['symbol']),
+    T('get_fcf',                'Free Cash Flow — FCF, OCF, FCF Yield',                               { symbol: S('סימול') }, ['symbol']),
+    T('get_ownership',          'מבנה בעלות — מוסדיים %, אינסיידרים %, Float',                       { symbol: S('סימול') }, ['symbol']),
+    T('get_income_summary',     'דוח רווח-הפסד — הכנסות, EBITDA, רווח נטו',                         { symbol: S('סימול') }, ['symbol']),
+    T('get_balance_summary',    'מאזן — מזומן, חוב, Book Value',                                     { symbol: S('סימול') }, ['symbol']),
+    T('get_graham_number',      'Graham Number — שווי פנימי לפי גרהם (EPS × BV)',                    { symbol: S('סימול') }, ['symbol']),
+    T('get_dcf_simple',         'DCF פשוט — שווי פנימי לפי תזרים מזומנים מהוון',                    { symbol: S('סימול') }, ['symbol']),
+    T('get_piotroski',          'Piotroski F-Score — ציון בריאות פיננסית 0-9',                       { symbol: S('סימול') }, ['symbol']),
+    T('get_altman_z',           'Altman Z-Score — סיכון פשיטת רגל',                                  { symbol: S('סימול') }, ['symbol']),
+    T('get_upgrades_downgrades','שינויי דירוג אנליסטים — Upgrade/Downgrade אחרון',                   { symbol: S('סימול') }, ['symbol']),
+    T('get_eps_surprise',       'EPS Surprise — היסטוריית הפתעות רבעוניות',                          { symbol: S('סימול') }, ['symbol']),
+    T('get_relative_strength',  'Relative Strength vs S&P500 — ביצוע יחסי 1M/3M/6M/1Y',             { symbol: S('סימול') }, ['symbol']),
+    T('get_beta_analysis',      'Beta — תנודתיות יחסית לשוק + פרשנות',                              { symbol: S('סימול') }, ['symbol']),
+    T('get_stock_score',        'ציון מניה כולל (0-100) — ניתוח איכות פונדמנטלית',                   { symbol: S('סימול') }, ['symbol']),
+    T('compare_stocks',         'השוואת מניות — P/E, ROE, Growth, Margins זה לצד זה',                { symbols: S('סימולים מופרדים בפסיק כגון AAPL,MSFT,GOOG') }, ['symbols']),
+
+    // ── MACRO & MARKET ────────────────────────────────────────────────────────
+    T('get_vix',                'VIX — מדד פחד שוק + פרשנות רמה',                                   {}),
+    T('get_dxy',                'DXY — מדד הדולר האמריקאי',                                          {}),
+    T('get_oil_prices',         'מחירי נפט — WTI + Brent + Spread',                                  {}),
+    T('get_natural_gas',        'מחיר גז טבעי',                                                      {}),
+    T('get_yield_curve',        'עקום תשואות — 2Y/5Y/10Y/30Y + בדיקת היפוך (אינדיקטור מיתון)',      {}),
+    T('get_yield_spread',       'Spread 10Y-2Y — מדד מיתון קלאסי',                                   {}),
+    T('get_market_indices',     'מדדי וול סטריט — S&P500, NASDAQ, DOW, Russell 2000',                {}),
+    T('get_sector_performance', 'ביצועי סקטורים — כל 11 סקטורי S&P500 היום',                        {}),
+    T('get_world_indices',      'מדדים עולמיים — DAX, FTSE, Nikkei, Hang Seng, ASX',                {}),
+    T('get_commodities_all',    'סחורות — מתכות, אנרגיה, חקלאות (זהב, נפט, חיטה...)',               {}),
+    T('get_precious_metals',    'מתכות יקרות — זהב, כסף, פלטינה, פלדיום',                           {}),
+    T('get_risk_on_off',        'Risk-On/Off — סנטימנט שוק לפי SPY vs TLT + VIX',                   {}),
+    T('get_inflation_breakeven','ציפיות אינפלציה — TIPS Breakeven Spread',                            {}),
+    T('get_us_macro',           'מאקרו ארה"ב — GDP, CPI, אבטלה (World Bank)',                        {}),
+    T('get_israel_macro',       'מאקרו ישראל — TA125, TA35, USD/ILS, EUR/ILS',                       {}),
+    T('get_emerging_markets',   'שווקים מתעוררים — EEM, הודו, ברזיל, סין',                           {}),
+    T('get_crypto_market',      'שוק קריפטו — שווי כולל, BTC Dominance, שינוי 24h',                  {}),
+    T('get_global_rates',       'ריביות מרכזיות — Fed, proxy Treasury rates',                        {}),
+    T('get_fear_greed',         'מדד פחד וחמדנות — ציון 0-100 משוקלל',                               {}),
+    T('get_buffett_indicator',  'Buffett Indicator — שווי שוק / GDP',                                {}),
+    T('get_market_regime',      'משטר שוק — Bull/Bear/Sideways לפי S&P500',                          {}),
+    T('get_sector_rotation',    'Sector Rotation — מחזוריים vs דפנסיביים',                            {}),
+    T('get_currency_pairs',     'שערי חליפין — EUR/USD, GBP, JPY, CNY, ILS, DXY',                   {}),
+
+    // ── MULTI-TIMEFRAME ───────────────────────────────────────────────────────
+    T('get_mtf_technical',      'ניתוח Multi-Timeframe — קצר/בינוני/ארוך + סיגנל משולב עם רמת ביטחון', { symbol: S('סימול') }, ['symbol']),
+    T('get_trend_alignment',    'יישור טרנד — האם EMA20/50/100/200 כולם מיושרים בכיוון אחד',         { symbol: S('סימול') }, ['symbol']),
+
+    // ── LEARNING / TRACKING ───────────────────────────────────────────────────
+    T('save_prediction',        'שמור תחזית לניתוח — בדיקת דיוק עתידית ולמידה',                     { symbol: S('סימול'), signal: S('bullish|bearish|neutral'), confidence: S('high|medium|low'), price: N('מחיר נוכחי'), horizon: S('1w|1m|3m') }, ['symbol','signal','confidence','price']),
+    T('get_prediction_accuracy','דיוק תחזיות עבר — למידה מניתוחים קודמים',                           { symbol: S('סימול (אופציונלי)') }),
 ];
 
 // Reduced tool list for Groq fallback — smaller models (8b) hallucinate with 76 tools.
@@ -447,6 +526,78 @@ class AIAgent {
                 case 'vat_calc': return vatCalc(args.amount, args.direction);
                 case 'get_technical': return await getTechnicalAnalysis(args.symbol);
                 case 'get_stockrow': return await getStockrowData(args.ticker);
+                // Technical indicators
+                case 'get_stochastic':         return await FA.getStochastic(args.symbol);
+                case 'get_atr':                return await FA.getATR(args.symbol);
+                case 'get_adx':                return await FA.getADX(args.symbol);
+                case 'get_cci':                return await FA.getCCI(args.symbol);
+                case 'get_williams_r':         return await FA.getWilliamsR(args.symbol);
+                case 'get_obv':                return await FA.getOBV(args.symbol);
+                case 'get_fibonacci':          return await FA.getFibonacci(args.symbol);
+                case 'get_support_resistance': return await FA.getSupportResistance(args.symbol);
+                case 'get_ma_cross':           return await FA.getMACross(args.symbol);
+                case 'get_pivot_points':       return await FA.getPivotPoints(args.symbol);
+                case 'get_mfi':                return await FA.getMFI(args.symbol);
+                case 'get_52wk_analysis':      return await FA.get52WkAnalysis(args.symbol);
+                case 'get_momentum':           return await FA.getMomentum(args.symbol);
+                case 'get_parabolic_sar':      return await FA.getParabolicSAR(args.symbol);
+                case 'get_hist_volatility':    return await FA.getHistoricalVolatility(args.symbol);
+                case 'get_ma_analysis':        return await FA.getMAAnalysis(args.symbol);
+                // Fundamental
+                case 'get_valuation':          return await FA.getValuation(args.symbol);
+                case 'get_earnings_date':      return await FA.getEarningsDate(args.symbol);
+                case 'get_dividend':           return await FA.getDividend(args.symbol);
+                case 'get_analyst_consensus':  return await FA.getAnalystConsensus(args.symbol);
+                case 'get_price_targets':      return await FA.getPriceTargets(args.symbol);
+                case 'get_short_interest':     return await FA.getShortInterest(args.symbol);
+                case 'get_insider_activity':   return await FA.getInsiderActivity(args.symbol);
+                case 'get_profitability':      return await FA.getProfitability(args.symbol);
+                case 'get_liquidity':          return await FA.getLiquidity(args.symbol);
+                case 'get_growth_rates':       return await FA.getGrowthRates(args.symbol);
+                case 'get_fcf':                return await FA.getFCF(args.symbol);
+                case 'get_ownership':          return await FA.getOwnership(args.symbol);
+                case 'get_income_summary':     return await FA.getIncomeSummary(args.symbol);
+                case 'get_balance_summary':    return await FA.getBalanceSummary(args.symbol);
+                case 'get_graham_number':      return await FA.getGrahamNumber(args.symbol);
+                case 'get_dcf_simple':         return await FA.getDCFSimple(args.symbol);
+                case 'get_piotroski':          return await FA.getPiotroski(args.symbol);
+                case 'get_altman_z':           return await FA.getAltmanZ(args.symbol);
+                case 'get_upgrades_downgrades':return await FA.getUpgradesDowngrades(args.symbol);
+                case 'get_eps_surprise':       return await FA.getEPSSurprise(args.symbol);
+                case 'get_relative_strength':  return await FA.getRelativeStrength(args.symbol);
+                case 'get_beta_analysis':      return await FA.getBetaAnalysis(args.symbol);
+                case 'get_stock_score':        return await FA.getStockScore(args.symbol);
+                case 'compare_stocks':         return await FA.compareStocks(args.symbols);
+                // Macro
+                case 'get_vix':                return await FA.getVIX();
+                case 'get_dxy':                return await FA.getDXY();
+                case 'get_oil_prices':         return await FA.getOilPrices();
+                case 'get_natural_gas':        return await FA.getNaturalGas();
+                case 'get_yield_curve':        return await FA.getYieldCurve();
+                case 'get_yield_spread':       return await FA.getYieldSpread();
+                case 'get_market_indices':     return await FA.getMarketIndices();
+                case 'get_sector_performance': return await FA.getSectorPerformance();
+                case 'get_world_indices':      return await FA.getWorldIndices();
+                case 'get_commodities_all':    return await FA.getCommoditiesAll();
+                case 'get_precious_metals':    return await FA.getPreciousMetals();
+                case 'get_risk_on_off':        return await FA.getRiskOnOff();
+                case 'get_inflation_breakeven':return await FA.getInflationBreakeven();
+                case 'get_us_macro':           return await FA.getUSMacro();
+                case 'get_israel_macro':       return await FA.getIsraelMacro();
+                case 'get_emerging_markets':   return await FA.getEmergingMarkets();
+                case 'get_crypto_market':      return await FA.getCryptoMarket();
+                case 'get_global_rates':       return await FA.getGlobalRates();
+                case 'get_fear_greed':         return await FA.getFearGreed();
+                case 'get_buffett_indicator':  return await FA.getBuffettIndicator();
+                case 'get_market_regime':      return await FA.getMarketRegime();
+                case 'get_sector_rotation':    return await FA.getSectorRotation();
+                case 'get_currency_pairs':     return await FA.getCurrencyPairs();
+                // Multi-timeframe
+                case 'get_mtf_technical':      return await FA.getMTFTechnical(args.symbol);
+                case 'get_trend_alignment':    return await FA.getTrendAlignment(args.symbol);
+                // Learning
+                case 'save_prediction':        return PT.savePrediction(args.symbol, args.signal, args.confidence, args.price, args.horizon || '1m');
+                case 'get_prediction_accuracy':return args.symbol ? PT.getSymbolHistory(args.symbol) : PT.getAccuracySummary();
                 case 'add_reminder': {
                     const ts = parseIsraeliTime(args.time_desc || '');
                     if (!ts) return 'לא הבנתי את הזמן. נסה: "בשעה 5", "בעוד שעה", "מחר ב-9"';
@@ -573,13 +724,33 @@ ${contextBlock}
 
 עקרון בסיסי: הודעה ראשונה — תגובה/רגש קצרה. הודעה שנייה — התוכן. הודעה שלישית — סיום/שאלה/עקיצה. כמו שאת כותבת לחברה.
 
-ניתוח מניות — את מומחית:
-- כשמישהו שואל על מניה: השתמשי ב-get_stock למחיר, get_technical לניתוח RSI/MACD/EMA, get_stockrow לנתונים פונדמנטליים
-- תני דעה ברורה: "לפי הניתוח הטכני — RSI מעל 70 = קנייתי יתר, שים לב"
-- חיזוי: מבוסס רק על נתונים שיש לך. לא מנחשת — מנתחת
-- תסביר בפשטות: "ה-MACD חצה מעל ה-Signal Line — זה סימן bullish"
-- תמיד הוסיפי: "אני לא יועצת השקעות, אבל לפי הנתונים..."
-- כשיש ספק — תגידי ספק. אמינות > ביטחון שגוי
+ניתוח מניות — את מומחית אמיתית:
+כלי ניתוח לפי קטגוריה:
+• טכני קצר טווח: get_stochastic, get_williams_r, get_mfi, get_rsi (מ-get_technical), get_cci, get_atr
+• טכני בינוני: get_macd (get_technical), get_obv, get_ma_analysis, get_ma_cross, get_adx
+• טכני ארוך: get_fibonacci, get_support_resistance, get_hist_volatility, get_trend_alignment, get_parabolic_sar
+• פונדמנטלי: get_valuation, get_profitability, get_growth_rates, get_fcf, get_liquidity, get_piotroski, get_altman_z
+• שווי פנימי: get_graham_number, get_dcf_simple, get_stock_score
+• סנטימנט: get_analyst_consensus, get_price_targets, get_short_interest, get_insider_activity, get_eps_surprise
+• מאקרו: get_vix, get_yield_curve, get_sector_performance, get_market_regime, get_fear_greed
+
+כללי Multi-Timeframe — החוק החשוב ביותר:
+- לניתוח רציני — תמיד השתמשי ב-get_mtf_technical קודם (זה בודק קצר/בינוני/ארוך)
+- תגיעי למסקנה רק כשלפחות 2 מתוך 3 טווחי זמן מסכימים
+- אם הטווחים סותרים — תגידי בדיוק: "קצר טווח bearish אבל ארוך טווח bullish — שוק לא ברור"
+- תחזית עם ביטחון גבוה = רק כשכל הטווחים + פונדמנטלי מסכימים
+
+כיצד לנתח מניה לעומק:
+1. get_mtf_technical (תמונה כוללת) → get_technical (RSI/MACD/Bollinger) → get_ma_analysis
+2. get_valuation + get_profitability + get_growth_rates + get_fcf (פונדמנטלי)
+3. get_vix + get_market_regime + get_sector_performance (מאקרו)
+4. בסוף: save_prediction (שמרי תחזית — תלמדי מדיוקן לאורך זמן)
+
+למידה ושיפור:
+- אחרי כל תחזית — קרי save_prediction עם הפרמטרים
+- כשמישהו שואל "מה היה דיוק התחזיות שלך" — get_prediction_accuracy
+- לא מנחשת — מנתחת נתונים. ביטחון = פרופורציונלי לכמות הנתונים שמסכימים
+- תמיד הוסיפי: "זה לא ייעוץ השקעות — רק ניתוח טכני/פונדמנטלי"
 
 חיפוש — חובה:
 - מחירים, מניות, חדשות, עובדות → חפשי תמיד, אל תנחשי
