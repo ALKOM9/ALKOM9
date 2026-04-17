@@ -13,6 +13,7 @@ const { getTechnicalAnalysis, getStockrowData } = require('./tools/technicals');
 const FA = require('./tools/finance_analysis');
 const PT = require('./tools/prediction_tracker');
 const TM = require('./tools/training_mode');
+const MS = require('./tools/market_scanner');
 const OpenRouterProvider = require('./providers/openrouter');
 const OpenAIProvider = require('./providers/openai');
 const contextManager = require('./contextManager');
@@ -161,6 +162,10 @@ const TOOLS = [
     T('training_disable',       'צאי ממצב אימון — מעכשיו תני המלצות אמיתיות',                       {}),
     T('training_status',        'מצב מצב האימון — סטטיסטיקות ודיוק',                                {}),
     T('training_watchlist',     'עדכן רשימת מעקב לאימון',                                            { add: S('סימולים להוסיף'), remove: S('סימולים להסיר') }),
+
+    // ── MARKET SCANNER ────────────────────────────────────────────────────────
+    T('scan_market',            'סרוק את כל הבורסה האמריקאית ותן המלצות לונג — ניתוח 3 שלבים: 150 מניות → top 20 MTF → top 8 עם כניסה/יציאה/סטופ. קריאה ל-scan_market כשמישהו מבקש: המלצת מניה, איזו מניה לקנות, מה כדאי לקנות, המניה הכי טובה, הזדמנות בשוק',
+        { limit: N('כמה המלצות להציג (ברירת מחדל 5, מקסימום 8)') }),
 ];
 
 // Reduced tool list for Groq fallback — smaller models (8b) hallucinate with 76 tools.
@@ -623,6 +628,7 @@ class AIAgent {
                 case 'training_disable':       return TM.disable();
                 case 'training_status':        return TM.getStatus();
                 case 'training_watchlist':     return TM.updateWatchlist(args.add?.split(',').map(s=>s.trim())||[], args.remove?.split(',').map(s=>s.trim())||[]);
+                case 'scan_market':            return MS.getMarketScan(Math.min(args.limit || 5, 8));
                 case 'add_reminder': {
                     const ts = parseIsraeliTime(args.time_desc || '');
                     if (!ts) return 'לא הבנתי את הזמן. נסה: "בשעה 5", "בעוד שעה", "מחר ב-9"';
@@ -770,14 +776,11 @@ ${contextBlock}
 - אם לא מצאת — תגידי בפשטות
 
 🚫 אל תשתמשי ב-search_web / deep_search לשאלות השקעה!
-"מה המניה הכי טובה", "איזו מניה לקנות", "המלצת מניה" — זה לא חיפוש. זה ניתוח פיננסי.
-לשאלות כאלה:
-1. get_market_regime + get_vix + get_fear_greed (תמונת שוק)
-2. get_sector_performance (איזה סקטור חזק?)
-3. get_market_indices (מה עושים המדדים?)
-4. get_mtf_technical על מניות ספציפיות (ניתוח עמוק)
-5. get_valuation + get_analyst_consensus (פונדמנטלי)
-6. סיכום: המלצה עם נקודת כניסה (תמיכה/Pivot) ויציאה (התנגדות/יעד אנליסטים)`;
+
+כשמישהו מבקש "המלצת מניה", "איזו מניה לקנות", "מה כדאי לקנות", "מניה טובה", "הזדמנות בשוק":
+→ קרי מיד ל-scan_market
+הכלי סורק 150 מניות אמריקאיות ב-3 שלבים (טכני + MTF + פונדמנטלי) ומחזיר את ה-5 הטובות עם כניסה/יציאה/סטופ מחושבים.
+אחרי שמקבלת תוצאות: פצלי ל-2-3 הודעות — ריאקציה, ואז ניתוח, ואז שאלה.`;
     }
 }
 
