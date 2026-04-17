@@ -1,11 +1,47 @@
 // Technical indicators: RSI, MACD, EMA, SMA, Bollinger Bands, Volume
 // Data source: Yahoo Finance historical + Stockrow fundamentals
 
+// ─── Yahoo Finance crumb (shared singleton via finance_analysis, or standalone) ──
+let _techCrumb = null;
+let _techCookie = null;
+let _techCrumbExpiry = 0;
+
+async function _getTechHeaders() {
+    if (_techCrumb && Date.now() < _techCrumbExpiry) {
+        return { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Cookie': _techCookie || '' };
+    }
+    try {
+        const r1 = await fetch('https://fc.yahoo.com', {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+            redirect: 'follow', signal: AbortSignal.timeout(6000),
+        });
+        const rawCookies = r1.headers.get('set-cookie') || '';
+        const m = rawCookies.match(/A[13]=([^;]+)/);
+        _techCookie = m ? `A3=${m[1]}` : rawCookies.split(';')[0];
+        const r2 = await fetch('https://query2.finance.yahoo.com/v1/test/getcrumb', {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Cookie': _techCookie },
+            signal: AbortSignal.timeout(6000),
+        });
+        if (r2.ok) { _techCrumb = (await r2.text()).trim(); _techCrumbExpiry = Date.now() + 30 * 60 * 1000; }
+    } catch (_) {}
+    return { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Cookie': _techCookie || '' };
+}
+
 async function fetchHistoricalCloses(symbol, days = 100) {
     const sym = symbol.toUpperCase();
-    const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=${days > 252 ? '2y' : '6mo'}`, {
-        headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(10000)
-    });
+    const range = days > 252 ? '2y' : '6mo';
+    const crumbPart = _techCrumb ? `&crumb=${encodeURIComponent(_techCrumb)}` : '';
+    const url = `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=${range}${crumbPart}`;
+
+    let res = await fetch(url, { headers: await _getTechHeaders(), signal: AbortSignal.timeout(10000) });
+    // Retry once on 401 with fresh crumb
+    if (res.status === 401) {
+        _techCrumbExpiry = 0;
+        const headers = await _getTechHeaders();
+        const urlRetry = `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=${range}${_techCrumb ? `&crumb=${encodeURIComponent(_techCrumb)}` : ''}`;
+        res = await fetch(urlRetry, { headers, signal: AbortSignal.timeout(10000) });
+    }
+
     if (!res.ok) throw new Error(`Yahoo Finance error: ${res.status}`);
     const d = await res.json();
     const result = d?.chart?.result?.[0];

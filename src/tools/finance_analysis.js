@@ -3,22 +3,83 @@
 
 const { fetchHistoricalCloses, calcSMA, calcEMA, calcRSI, calcMACD, calcBollinger } = require('./technicals');
 
-const YF_HEADERS = { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' };
 const TIMEOUT = 12000;
+
+// ─── Yahoo Finance crumb authentication ───────────────────────────────────────
+// Yahoo Finance API requires a crumb + cookie since late 2023.
+// We cache the crumb for 30 minutes; if a request returns 401 we refresh and retry once.
+
+let _yfCrumb = null;
+let _yfCookie = null;
+let _yfCrumbExpiry = 0;
+
+async function _refreshYFCrumb() {
+    try {
+        // Step 1: get cookie from fc.yahoo.com
+        const r1 = await fetch('https://fc.yahoo.com', {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+            redirect: 'follow',
+            signal: AbortSignal.timeout(8000),
+        });
+        const rawCookies = r1.headers.get('set-cookie') || '';
+        // Extract A3 or A1 cookie (Yahoo auth cookie)
+        const cookieMatch = rawCookies.match(/A[13]=([^;]+)/);
+        _yfCookie = cookieMatch ? `A3=${cookieMatch[1]}` : (rawCookies.split(';')[0] || '');
+
+        // Step 2: fetch crumb
+        const r2 = await fetch('https://query2.finance.yahoo.com/v1/test/getcrumb', {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Cookie': _yfCookie,
+            },
+            signal: AbortSignal.timeout(8000),
+        });
+        if (r2.ok) {
+            _yfCrumb = (await r2.text()).trim();
+            _yfCrumbExpiry = Date.now() + 30 * 60 * 1000; // 30 min
+            console.log(`  📊 Yahoo Finance crumb refreshed`);
+        }
+    } catch (e) {
+        console.warn(`  ⚠️ YF crumb refresh failed: ${e.message}`);
+    }
+}
+
+async function _yfHeaders() {
+    if (!_yfCrumb || Date.now() > _yfCrumbExpiry) {
+        await _refreshYFCrumb();
+    }
+    return {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+        'Cookie': _yfCookie || '',
+    };
+}
+
+function _addCrumb(url) {
+    return _yfCrumb ? `${url}${url.includes('?') ? '&' : '?'}crumb=${encodeURIComponent(_yfCrumb)}` : url;
+}
 
 // ─── Yahoo Finance helpers ────────────────────────────────────────────────────
 
-async function yf(sym, modules) {
-    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(sym)}?modules=${modules}`;
-    const res = await fetch(url, { headers: YF_HEADERS, signal: AbortSignal.timeout(TIMEOUT) });
+async function yf(sym, modules, _retry = true) {
+    const url = _addCrumb(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(sym)}?modules=${modules}`);
+    const res = await fetch(url, { headers: await _yfHeaders(), signal: AbortSignal.timeout(TIMEOUT) });
+    if (res.status === 401 && _retry) {
+        await _refreshYFCrumb();
+        return yf(sym, modules, false);
+    }
     if (!res.ok) throw new Error(`YF ${res.status}`);
     const d = await res.json();
     return d?.quoteSummary?.result?.[0] || null;
 }
 
-async function yfPrice(sym, interval = '1d', range = '6mo') {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${interval}&range=${range}`;
-    const res = await fetch(url, { headers: YF_HEADERS, signal: AbortSignal.timeout(TIMEOUT) });
+async function yfPrice(sym, interval = '1d', range = '6mo', _retry = true) {
+    const url = _addCrumb(`https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${interval}&range=${range}`);
+    const res = await fetch(url, { headers: await _yfHeaders(), signal: AbortSignal.timeout(TIMEOUT) });
+    if (res.status === 401 && _retry) {
+        await _refreshYFCrumb();
+        return yfPrice(sym, interval, range, false);
+    }
     if (!res.ok) throw new Error(`YF chart ${res.status}`);
     const d = await res.json();
     const r = d?.chart?.result?.[0];
