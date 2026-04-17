@@ -50,9 +50,17 @@ function reliabilityScore(url) {
 
 // ─── Basic Search (quick) ─────────────────────────────────────────────────────
 
+// Finance/investment queries that should NOT go to Wikipedia
+const FINANCE_QUERY_PATTERNS = /best stock|stocks to (buy|invest|watch)|stock (pick|recommend)|invest in|entry.?point|exit.?point|מניה.{0,15}(לקנות|להשקיע|מומלצת|טובה)|איזו מניה|המלצת מניה|לקנות מניה|השקעה במניה/i;
+
 async function searchWeb(query) {
     const lower = query.toLowerCase();
-    const tasks = [searchDuckDuckGoLite(query), searchWikipedia(query)];
+    const isFinanceQuery = FINANCE_QUERY_PATTERNS.test(query);
+
+    // For investment/stock-pick queries, skip Wikipedia (irrelevant) — use DDG only
+    const tasks = isFinanceQuery
+        ? [searchDuckDuckGoLite(query)]
+        : [searchDuckDuckGoLite(query), searchWikipedia(query)];
 
     const symMatch = query.match(/\b[A-Z]{2,5}\b/);
     if (symMatch && /stock|share|ticker|nasdaq|nyse|מניה|מניות/i.test(query))

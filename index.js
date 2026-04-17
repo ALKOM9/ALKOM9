@@ -22,7 +22,7 @@ async function main() {
     console.log('  Aylin WhatsApp AI');
     console.log('='.repeat(55));
     if (openaiKey) {
-        console.log('  Primary AI:  OpenAI GPT-5');
+        console.log('  Primary AI:  OpenAI GPT-4.1');
         if (openrouterKey) console.log('  Fallback #1: OpenRouter (free models)');
         if (groqKey)       console.log(`  Fallback #${openrouterKey ? 2 : 1}: Groq`);
         if (anthropicKey)  console.log(`  Fallback #${openrouterKey ? 3 : 2}: Claude`);

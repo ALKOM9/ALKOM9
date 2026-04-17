@@ -1,11 +1,11 @@
-// OpenAI Provider — GPT-5 primary model
+// OpenAI Provider — GPT-4.1 primary model
 // Supports tool calling, vision, streaming (disabled for simplicity)
 
 const BASE_URL = 'https://api.openai.com/v1/chat/completions';
 const TIMEOUT_MS = 30000;
 
-const PRIMARY_MODEL   = 'gpt-5.1';
-const FALLBACK_MODEL  = 'gpt-4o'; // if gpt-5.1 not yet on account
+// Model priority: gpt-4.1 → gpt-4.1-mini → gpt-4o
+const MODEL_CHAIN = ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o'];
 
 class OpenAIProvider {
     constructor(apiKey) {
@@ -14,11 +14,11 @@ class OpenAIProvider {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`,
         };
-        this._gpt5Available = true; // optimistically assume gpt-5 exists
+        this._modelIdx = 0; // start with best model
     }
 
     get activeModel() {
-        return this._gpt5Available ? PRIMARY_MODEL : FALLBACK_MODEL;
+        return MODEL_CHAIN[this._modelIdx] || MODEL_CHAIN[MODEL_CHAIN.length - 1];
     }
 
     async call(messages, tools = [], opts = {}) {
@@ -49,14 +49,16 @@ class OpenAIProvider {
             const err = new Error(`OpenAI error ${res.status}: ${errText.slice(0, 200)}`);
             err.status = res.status;
 
-            // gpt-5 not yet available on this account → fall back to gpt-4o silently
-            // OpenAI returns 404 or 400 for unknown/inaccessible models
-            const modelNotFound = (res.status === 404 || res.status === 400) && model === PRIMARY_MODEL
+            // Model not available → try next in chain
+            const isModelError = (res.status === 404 || res.status === 400)
                 && (errText.includes('model') || errText.includes('does not exist') || errText.includes('invalid'));
-            if (modelNotFound) {
-                this._gpt5Available = false;
-                console.warn(`  OpenAI: ${PRIMARY_MODEL} not available (${res.status}), falling back to ${FALLBACK_MODEL}`);
-                return this.call(messages, tools, { ...opts, model: FALLBACK_MODEL });
+            if (isModelError && !opts.model) {
+                // only auto-degrade when using activeModel (not a forced opts.model)
+                if (this._modelIdx < MODEL_CHAIN.length - 1) {
+                    this._modelIdx++;
+                    console.warn(`  OpenAI: ${model} not available (${res.status}), trying ${this.activeModel}`);
+                    return this.call(messages, tools, opts);
+                }
             }
 
             throw err;
