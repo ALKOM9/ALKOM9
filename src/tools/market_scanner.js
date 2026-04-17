@@ -1,45 +1,145 @@
 // market_scanner.js — Full US Market Scanner (Long-only recommendations)
-// 3-stage funnel: Quick Screen (150 stocks) → MTF Technical (top 20) → Deep Analysis + Entry/Exit (top 8)
+// Universe: ~500 strongest US stocks (full S&P 500 + top growth stocks outside index)
+// 3-stage funnel: Quick Screen (~500) → MTF Technical (top 25) → Deep Analysis + Entry/Exit (top 8)
 
 const { calcRSI, calcEMA, calcMACD, calcSMA } = require('./technicals');
 
-// ─── Universe: 150 quality US stocks ─────────────────────────────────────────
+// ─── Universe: ~500 strongest US stocks (full S&P 500 + high-quality growth) ──
 const UNIVERSE = [
-    // Mega-cap tech
+    // ── Mega-cap / Magnificent 7 ──────────────────────────────────────────────
     'AAPL','MSFT','NVDA','GOOGL','GOOG','META','AMZN','TSLA','AVGO','ORCL',
-    // Semiconductors
-    'AMD','QCOM','TXN','AMAT','LRCX','KLAC','MU','MRVL','ON','SWKS',
-    // Software / Cloud
-    'CRM','ADBE','NOW','INTU','PANW','CRWD','SNOW','DDOG','NET','ZS',
-    'PLTR','HUBS','WDAY','VEEV','TEAM','MDB','GTLB','S','HOOD',
-    // Consumer tech / Platforms
-    'NFLX','SPOT','UBER','ABNB','BKNG','EXPE','DASH','LYFT','PINS','SNAP',
-    // Finance
-    'JPM','BAC','WFC','GS','MS','V','MA','AXP','COF','BX',
-    'SCHW','IBKR','SQ','PYPL','AFRM','NU','SOFI',
-    // Healthcare / Biotech
-    'LLY','JNJ','ABBV','MRK','PFE','UNH','ISRG','TMO','ABT',
-    'MRNA','REGN','GILD','VRTX','DXCM','IDXX','INCY',
-    // Consumer Discretionary
-    'HD','LOW','TGT','COST','WMT','MCD','SBUX','NKE','LULU','TJX','ROST',
-    // Consumer Staples
-    'PEP','KO','PG','MDLZ','CL','GIS',
-    // Energy
-    'XOM','CVX','COP','EOG','SLB','MPC','VLO',
-    // Industrials
-    'CAT','DE','GE','HON','RTX','LMT','BA','UPS','FDX','ETN','PWR',
-    // Materials / Commodities
-    'FCX','NEM','AA','CLF','NUE',
-    // Utilities / REIT (defensive)
-    'NEE','AEP','DUK','AMT','EQIX','PLD',
-    // High-growth / momentum
-    'CELH','AXON','DUOL','ARM','SMCI','MSTR','COIN','APP','IOT','TMDX',
-    // Broad market ETFs (for context, excluded from picks)
-    'SPY','QQQ','IWM',
+
+    // ── Semiconductors ────────────────────────────────────────────────────────
+    'AMD','QCOM','TXN','AMAT','LRCX','KLAC','MU','MRVL','ADI','MCHP',
+    'ON','SWKS','QRVO','ENTG','MPWR','KEYS','CDNS','SNPS','ANSS','COHR',
+    'WOLF','CRUS','MTSI','RMBS','SLAB','AMBA','ALGM','DIOD','VICR','SITM',
+
+    // ── Software / Enterprise ─────────────────────────────────────────────────
+    'CRM','ADBE','NOW','INTU','PANW','CSCO','IBM','ACN','CTSH','IT',
+    'WDAY','VEEV','TEAM','HUBS','PAYC','PTC','EPAM','GDDY','MANH','PCTY',
+    'TOST','CWAN','RAMP','ALTR','BSY','DAVA','DV','EFX','VRSN','FFIV',
+
+    // ── Cybersecurity ─────────────────────────────────────────────────────────
+    'CRWD','FTNT','ZS','PANW','S','OKTA','TENB','RPM','CHKP','VRNS',
+    'QLYS','CYBR','SAIL','ACIW','EVTC',
+
+    // ── Cloud / SaaS / AI ─────────────────────────────────────────────────────
+    'PLTR','SNOW','DDOG','NET','MDB','GTLB','AI','PATH','SMAR','FIVN',
+    'APPF','NCNO','PCOR','BRZE','CFLT','ESTC','SUMO','SPSC','FORR',
+    'ARM','APP','IOT','SMCI','MSTR','HOOD',
+
+    // ── Internet / Consumer Tech ──────────────────────────────────────────────
+    'NFLX','UBER','ABNB','BKNG','EXPE','DASH','LYFT','SPOT','PINS','SNAP',
+    'YELP','ANGI','TRIP','OPEN','CARG','IAC','CARS','TCOM',
+
+    // ── Payments / Fintech ────────────────────────────────────────────────────
+    'V','MA','PYPL','SQ','FIS','FISV','GPN','WEX','WU','RPAY',
+    'AFRM','NU','SOFI','UPST','BILL','FLYW','RELY','COOP','UWMC',
+
+    // ── Big Banks ─────────────────────────────────────────────────────────────
+    'JPM','BAC','WFC','GS','MS','C','USB','PNC','TFC','COF',
+    'BK','STT','SCHW','IBKR','RF','HBAN','CFG','KEY','MTB','ZION',
+
+    // ── Capital Markets / Asset Managers ─────────────────────────────────────
+    'BX','KKR','APO','ARES','CG','BLK','MSCI','SPGI','MCO','ICE','CME',
+    'NDAQ','CBOE','FDS','AMG','IVZ','WDR','VCTR','HLNE',
+
+    // ── Insurance ─────────────────────────────────────────────────────────────
+    'AXP','MET','PRU','AFL','ALL','PGR','TRV','CB','AIG','HIG','GL',
+    'LNC','UNM','BRK-B','RNR','RE','EG','WRB','RYAN','ACGL',
+
+    // ── Healthcare / Big Pharma ───────────────────────────────────────────────
+    'LLY','JNJ','ABBV','MRK','PFE','UNH','CI','CVS','HUM','ELV',
+    'CNC','MOH','HCA','UHS','THC','ENSG','AMED',
+
+    // ── Medical Devices ───────────────────────────────────────────────────────
+    'TMO','ABT','DHR','BSX','MDT','SYK','EW','ZBH','BAX','BDX',
+    'ISRG','HOLX','ALGN','IDXX','IQV','CRL','A','MTD','PODD','DXCM',
+    'GEHC','NVST','OMCL','ITGR','LMAT','INSP','SWAV','AXNX','IRTC',
+
+    // ── Biotech ───────────────────────────────────────────────────────────────
+    'REGN','GILD','MRNA','AMGN','BIIB','VRTX','BMY','INCY','SGEN','ALNY',
+    'ARGX','ROIV','RXRX','IMVT','KYMR','CGON','NTLA','BEAM','VERV',
+    'RARE','FOLD','ACAD','NKTR','SAGE','MRUS','PRTA',
+
+    // ── Consumer Discretionary ────────────────────────────────────────────────
+    'HD','LOW','MCD','SBUX','NKE','LULU','TJX','ROST','CMG','YUM',
+    'DPZ','EAT','TXRH','SHAK','CAVA','WEN','QSR','JACK',
+    'DHI','LEN','PHM','TOL','NVR','MDC','KBH','MHO','SKY',
+    'TSCO','DG','DLTR','BJ','FIVE','OLLI','BTI','CASY',
+    'F','GM','APTV','LEA','BWA','GNTX','FOX','SNA','LKQ',
+
+    // ── Luxury / Apparel ──────────────────────────────────────────────────────
+    'DECK','SKX','ONON','CROX','HBI','PVH','TPR','CPRI','RH','WSM',
+    'ETSY','EBAY','W','REAL','RVLV','RENT',
+
+    // ── Consumer Staples ──────────────────────────────────────────────────────
+    'WMT','COST','PG','KO','PEP','PM','MO','KMB','CL','MDLZ',
+    'GIS','K','CPB','HSY','MKC','SJM','CAG','CHD','CLX','EL',
+    'ULTA','COTY','IPAR','ELF','SFM',
+
+    // ── Energy ────────────────────────────────────────────────────────────────
+    'XOM','CVX','COP','EOG','SLB','MPC','PSX','VLO','HES','DVN',
+    'FANG','OXY','HAL','BKR','APA','MRO','RRC','AR','EQT','CNX',
+    'NOG','DINO','SM','CIVI','MGY','MTDR',
+
+    // ── Industrials / Aerospace & Defense ────────────────────────────────────
+    'CAT','DE','HON','RTX','LMT','BA','GE','GEV','ETN','EMR',
+    'ROK','PH','ITW','MMM','AME','IEX','FAST','GWW','SWK','ROP',
+    'VRSK','TT','JCI','CARR','OTIS','IR','GNRC','BLDR','VMI','AAON',
+    'HWM','SPR','TDG','HEI','KTOS','RCAT','ACHR','JOBY',
+
+    // ── Transportation / Logistics ────────────────────────────────────────────
+    'UPS','FDX','UNP','CSX','NSC','ODFL','JBHT','CHRW','XPO',
+    'EXPD','SAIA','ARCB','WERN','LSTR','HUBG',
+
+    // ── Waste / Environment ───────────────────────────────────────────────────
+    'WM','RSG','CWST','SRCL','CLH',
+
+    // ── Materials ─────────────────────────────────────────────────────────────
+    'LIN','APD','SHW','PPG','NEM','FCX','NUE','STLD','X','AA',
+    'ATI','MLM','VMC','MOS','CF','IFF','ECL','CE','HUN','EMN',
+    'RPM','OLN','AXTA','IOSP','TPC',
+
+    // ── Utilities ─────────────────────────────────────────────────────────────
+    'NEE','DUK','SO','D','AEP','EXC','XEL','SRE','ES','PEG',
+    'WEC','ED','DTE','ETR','EIX','PPL','AEE','CMS','NI','LNT',
+    'EVRG','NRG','VST','CEG','CWEN','AES',
+
+    // ── Clean Energy ─────────────────────────────────────────────────────────
+    'FSLR','ENPH','SEDG','RUN','ARRY','NOVA','SPWR','CSIQ',
+
+    // ── REITs ────────────────────────────────────────────────────────────────
+    'AMT','PLD','EQIX','CCI','SPG','PSA','EQR','AVB','MAA','O',
+    'VICI','GLPI','WELL','VTR','PEAK','KIM','REG','FRT','NNN','STOR',
+    'COLD','REXR','ELS','SUI','UDR','ESS','CPT',
+
+    // ── Telecom / Media ───────────────────────────────────────────────────────
+    'T','VZ','TMUS','CMCSA','CHTR','DIS','WBD','PARA','NWSA',
+    'OMC','IPG','TTD','MGNI','PUBM','IAS',
+
+    // ── Data / Cloud Infrastructure ───────────────────────────────────────────
+    'EQIX','DLR','CONE','LFST','GLBE','WEX','DFIN',
+
+    // ── High-Momentum Growth (outside S&P 500) ────────────────────────────────
+    'COIN','MSTR','CELH','AXON','DUOL','HIMS','ELF','TMDX','IOT',
+    'MNDY','GTLB','BILL','DKNG','PENN','RSI','FLUT',
+    'SE','MELI','NU','GRAB','RELY','COOP',
+    'RIVN','LCID','NIO','LI','XPEV',
+    'RBLX','U','BMBL','MTCH','IAC',
+
+    // ── ETFs (excluded from picks, included for market context) ───────────────
+    'SPY','QQQ','IWM','XLK','XLF','XLV','XLE','XLI','XLY','XLP',
 ];
 
+// Deduplicate
+const _seen = new Set();
+const UNIVERSE_DEDUP = UNIVERSE.filter(s => { if (_seen.has(s)) return false; _seen.add(s); return true; });
+
 // Stocks to exclude from picks (ETFs only)
-const ETF_BLACKLIST = new Set(['SPY','QQQ','IWM']);
+const ETF_BLACKLIST = new Set([
+    'SPY','QQQ','IWM','XLK','XLF','XLV','XLE','XLI','XLY','XLP',
+]);
 
 // ─── Cache ────────────────────────────────────────────────────────────────────
 let _cache = null;
@@ -314,11 +414,11 @@ async function scanMarket(forceRefresh = false) {
 
     console.log('  🔍 Market scan starting — Stage 1: Quick screen...');
 
-    // ── Stage 1: Fetch all 150 stocks (10 at a time) ──
+    // ── Stage 1: Fetch all ~500 stocks (15 at a time) ──
     const rawData = await batchProcess(
-        UNIVERSE,
+        UNIVERSE_DEDUP,
         sym => quickFetch(sym),
-        10, 150,
+        15, 120,
     );
 
     // Score all
@@ -327,16 +427,16 @@ async function scanMarket(forceRefresh = false) {
         .filter(s => !ETF_BLACKLIST.has(s.sym))
         .sort((a, b) => b.score - a.score);
 
-    console.log(`  📊 Stage 1 done: ${scored.length} stocks scored. Top 20 → Stage 2...`);
+    console.log(`  📊 Stage 1 done: ${scored.length} stocks scored. Top 25 → Stage 2...`);
 
-    // ── Stage 2: MTF Technical on top 20 ──
-    const top20 = scored.slice(0, 20);
+    // ── Stage 2: MTF Technical on top 25 ──
+    const top20 = scored.slice(0, 25);
     const top20Data = rawData.filter(d => d && top20.some(s => s.sym === d.sym));
 
     const mtfResults = await batchProcess(
         top20Data,
         d => mtfScore(d.sym, d.closes),
-        5, 200,
+        8, 150,
     );
 
     // Merge MTF scores with quick scores
