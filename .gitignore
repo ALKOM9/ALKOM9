@@ -3,3 +3,11 @@ node_modules/
 .wwebjs_auth/
 .wwebjs_cache/
 *.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.streamlit/secrets.toml
