@@ -14,7 +14,7 @@ def render_quiz(module_key: str, questions: list[dict]) -> None:
         - "explain": short explanation shown after answering (str)
     """
     st.markdown("### 🧠 חידון – 5 שאלות")
-    st.caption("בחר תשובה לכל שאלה ולחץ 'בדוק'. החידון לא נשמר בין כניסות.")
+    st.caption("ענה על כל השאלות ולחץ \"בדוק תשובות\". התשובות לא נשמרות בין ביקורים באתר.")
 
     state_key = f"quiz_state_{module_key}"
     if state_key not in st.session_state:
@@ -45,7 +45,7 @@ def render_quiz(module_key: str, questions: list[dict]) -> None:
             else:
                 correct_text = q["options"][correct]
                 st.markdown(
-                    f"<div class='quiz-wrong'>❌ לא נכון. התשובה: <b>{correct_text}</b>. {q['explain']}</div>",
+                    f"<div class='quiz-wrong'>❌ לא נכון. התשובה הנכונה: <b>{correct_text}</b>. {q['explain']}</div>",
                     unsafe_allow_html=True,
                 )
         st.write("")
@@ -70,6 +70,6 @@ def render_quiz(module_key: str, questions: list[dict]) -> None:
         if correct_count == len(questions):
             st.success("🎉 ציון מושלם.")
         elif correct_count >= len(questions) * 0.6:
-            st.info("טוב, אבל יש מה לחזור עליו.")
+            st.info("ציון סביר, אבל כדאי לחזור על מה שטעית בו.")
         else:
-            st.warning("מומלץ לקרוא את המודול שוב לפני שעוברים הלאה.")
+            st.warning("כדאי לקרוא את המודול שוב לפני המעבר הלאה.")

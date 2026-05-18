@@ -10,24 +10,23 @@ import streamlit as st
 from utils.page import bootstrap, page_end
 
 
-bootstrap("מודול 7 – סורק פורקס חי")
+bootstrap("מודול 7 – סורק מט\"ח חי")
 
-st.markdown("## 7️⃣ מודול 7 – סורק פורקס חי (ECB reference rates)")
-st.caption("פיד יומי חינמי מ-frankfurter.app (ECB) – הצגה של ה-implied cross מול ה-market cross.")
+st.markdown("## 7️⃣ מודול 7 – סורק מט\"ח חי (ECB Reference Rates)")
+st.caption("פיד יומי חינמי מ-frankfurter.app (ECB) – הצגת ה-Implied Cross מול ה-Market Cross.")
 st.divider()
 
 st.warning(
-    "⚠️ **חשוב להבין מה זה הנתונים שלפניך:**\n\n"
-    "- המקור הוא **ECB reference rates** דרך frankfurter.app, **חינמי וללא מפתח**.\n"
-    "- הנתונים **לא live tradeable** – זה ציטוט mid-price יומי של הבנק המרכזי האירופי.\n"
-    "- כדי לסחור באמת היית צריך פיד מ-LP אמיתי (bid/ask, סנטים בודדים של לטנסי, $$$).\n"
-    "- **המטרה של הסורק הזה היא חינוכית בלבד:** להמחיש איך נראית הסטייה בין implied ל-market cross.\n"
-    "- אינני יועץ פיננסי. אין כאן המלצה. אין כאן הזדמנות מסחר שאתה יכול לבצע."
+    "⚠️ **חשוב להבין את משמעות הנתונים שלפניכם:**\n\n"
+    "- המקור: **שערי ייחוס של הבנק המרכזי האירופי (ECB)** דרך frankfurter.app, חינמי וללא מפתח.\n"
+    "- הנתונים **אינם Live Tradeable** – זהו ציטוט mid-price יומי של הבנק המרכזי האירופי.\n"
+    "- כדי לסחור באמת היו צריכים feed מ-LP אמיתי (Bid/Ask, לטנסי בודדים של מילישניות, $$$).\n"
+    "- **מטרת הסורק היא חינוכית בלבד:** להמחיש כיצד נראית הסטייה בין Implied ל-Market Cross.\n"
+    "- אינני יועץ פיננסי. אין כאן המלצה. אין כאן הזדמנות מסחר שניתן לבצע."
 )
 
 st.divider()
 
-# --- Triangle selector ---
 TRIANGLES = {
     "EUR / USD / JPY": ("EUR", "USD", "JPY"),
     "EUR / GBP / USD": ("EUR", "GBP", "USD"),
@@ -37,16 +36,16 @@ TRIANGLES = {
     "EUR / USD / CHF": ("EUR", "USD", "CHF"),
 }
 
-st.markdown("### בחר משולש מטבעות")
+st.markdown("### בחירת משולש מטבעות")
 triangle_name = st.selectbox("Triangle", list(TRIANGLES.keys()), index=0)
 a, b, c = TRIANGLES[triangle_name]
 
-st.caption(f"המשולש הנבחר: **{a} / {b} / {c}**. נקבל את 3 הציטוטים: {a}/{b}, {b}/{c}, {a}/{c}.")
+st.caption(f"המשולש הנבחר: **{a} / {b} / {c}**. נמשוך שלושה ציטוטים: {a}/{b}, {b}/{c}, {a}/{c}.")
 
-# --- Fetch rates from frankfurter.app ---
+
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_rate(base: str, quote: str) -> Optional[dict]:
-    """Returns {'rate': float, 'date': str} or None on error."""
+    """Returns {'rate': float, 'date': str} or {'error': str}."""
     url = f"https://api.frankfurter.app/latest?from={base}&to={quote}"
     try:
         r = requests.get(url, timeout=8)
@@ -61,7 +60,7 @@ def fetch_rate(base: str, quote: str) -> Optional[dict]:
 fetch_button = st.button("🔄 משוך ציטוטים", type="primary", use_container_width=True)
 
 if fetch_button or "fx_quotes" not in st.session_state:
-    with st.spinner("מושך נתונים..."):
+    with st.spinner("מושך נתונים…"):
         st.session_state["fx_quotes"] = {
             "ab": fetch_rate(a, b),
             "bc": fetch_rate(b, c),
@@ -75,13 +74,13 @@ errors = [v for v in (quotes.get("ab"), quotes.get("bc"), quotes.get("ac")) if v
 if errors:
     st.error(
         "❌ שגיאה במשיכת הציטוטים: " + ", ".join(e["error"] for e in errors) +
-        "\n\nייתכן ש-frankfurter.app זמנית לא זמין. נסה שוב בעוד דקה."
+        "\n\nייתכן ש-frankfurter.app אינו זמין באופן זמני. נסו שוב בעוד דקה."
     )
     page_end()
     st.stop()
 
 if not all(quotes.get(k) and "rate" in quotes[k] for k in ("ab", "bc", "ac")):
-    st.info("לחץ '🔄 משוך ציטוטים' כדי להתחיל.")
+    st.info("לחצו '🔄 משוך ציטוטים' כדי להתחיל.")
     page_end()
     st.stop()
 
@@ -96,21 +95,20 @@ df = pd.DataFrame(
     [
         {"זוג": f"{a}/{b}", "Mid (ECB)": rate_ab},
         {"זוג": f"{b}/{c}", "Mid (ECB)": rate_bc},
-        {"זוג": f"{a}/{c}", "Mid (ECB) – בשוק": rate_ac_market},
+        {"זוג": f"{a}/{c}", "Mid (ECB) בשוק": rate_ac_market},
     ]
 )
 st.dataframe(df, hide_index=True, use_container_width=True)
 
-st.caption(f"📅 תאריך הנתונים: **{data_date}** · נמשך אצלך: {fetched_at}")
+st.caption(f"📅 תאריך הנתונים: **{data_date}** · נמשך אצלכם: {fetched_at}")
 
-# --- Triangulation math ---
 rate_ac_implied = rate_ab * rate_bc
 deviation_abs = rate_ac_market - rate_ac_implied
 deviation_bp = (deviation_abs / rate_ac_implied) * 10_000 if rate_ac_implied else 0
 profit_factor = rate_ac_market / rate_ac_implied if rate_ac_implied else 0
 profit_pct = (profit_factor - 1) * 100
 
-st.markdown("### 🧮 חישוב ה-implied cross")
+st.markdown("### 🧮 חישוב ה-Implied Cross")
 
 st.code(
     f"{a}/{c} implied = ({a}/{b}) × ({b}/{c}) = {rate_ab:.6f} × {rate_bc:.6f} = {rate_ac_implied:.6f}\n"
@@ -122,28 +120,28 @@ st.code(
 m1, m2, m3 = st.columns(3)
 m1.metric(f"{a}/{c} Implied", f"{rate_ac_implied:.6f}")
 m2.metric(f"{a}/{c} Market",  f"{rate_ac_market:.6f}", delta=f"{deviation_abs:+.6f}")
-m3.metric("Deviation (bp)",   f"{deviation_bp:+.2f}",  delta=f"{profit_pct:+.4f}%")
+m3.metric("סטייה (bp)",       f"{deviation_bp:+.2f}",  delta=f"{profit_pct:+.4f}%")
 
-# --- Interpretation ---
-st.markdown("### 🚦 פירוש")
+st.markdown("### 🚦 פירוש התוצאה")
 
 abs_bp = abs(deviation_bp)
 if abs_bp < 0.5:
     st.success(
-        f"⚖️ סטייה זניחה ({abs_bp:.2f} bp). ה-cross של {a}/{c} בשוק מתואם כמעט מושלם עם החישוב מתוך 3 הזוגות. "
-        "ככה זה אמור להיראות ברוב הזמן בשוק יעיל."
+        f"⚖️ סטייה זניחה ({abs_bp:.2f} bp). ה-cross של {a}/{c} בשוק מתואם כמעט "
+        "באופן מושלם עם החישוב משלושת הזוגות. כך זה אמור להיראות ברוב הזמן בשוק יעיל."
     )
 elif abs_bp < 3:
     st.info(
-        f"📐 סטייה קטנה ({abs_bp:.2f} bp). זה בגדר הרעש של ECB reference rates שמתעדכנים פעם ביום ובאיחור. "
-        "לא הזדמנות אמיתית – פערים בני-זיהוי כאלה חיים אצל LPs מיקרושניות בלבד."
+        f"📐 סטייה קטנה ({abs_bp:.2f} bp). זה בגדר הרעש של ECB Reference Rates "
+        "שמתעדכנים פעם ביום ובאיחור מסוים. לא הזדמנות אמיתית – פערים בני זיהוי "
+        "מסוג זה חיים אצל LPs מיקרושניות בלבד."
     )
 else:
     st.warning(
         f"📊 סטייה גדולה יחסית ({abs_bp:.2f} bp). זה כמעט תמיד מצביע על:\n"
-        "- ECB rates עבור 3 הזוגות לא נמדדו באותה שנייה (יש לזכור: הם daily reference).\n"
+        "- שערי ECB עבור שלושת הזוגות לא נמדדו באותה שנייה (חשוב לזכור: אלה Daily Reference).\n"
         "- אחד הזוגות נסחר בדינמיקה שונה (למשל JPY בשעות אסיה).\n\n"
-        "**זה לא 'הזדמנות ארביטראז' אמיתית' שאפשר לבצע.**"
+        "**זו אינה 'הזדמנות ארביטראז' אמיתית' שניתן לבצע.**"
     )
 
 st.divider()
@@ -151,23 +149,24 @@ st.divider()
 st.markdown("### 🧠 מה ללמוד מהסורק")
 
 st.markdown(
-    f"""
-1. **ה-implied מאוד קרוב ל-market בפועל.** רוב הזמן הסטייה היא כמה bp בלבד.
-2. **כשמופיעה סטייה גדולה ב-ECB reference rates, היא כמעט תמיד תוצר של desynchronization** —
+    """
+1. **ה-Implied קרוב מאוד ל-Market בפועל.** רוב הזמן הסטייה היא כמה bp בלבד.
+2. **כשמופיעה סטייה גדולה בשערי ECB, היא כמעט תמיד תוצאה של חוסר סנכרון** –
    לא הזדמנות.
-3. **כדי לדעת אם באמת הייתה הזדמנות**, היית צריך:
-   - פיד **real-time** (μs-level), לא יומי.
+3. **כדי לדעת אם באמת הייתה הזדמנות**, יש צורך ב:
+   - feed **Real-Time** ברמת μs, לא יומי.
    - **Bid/Ask**, לא mid.
-   - מנגנון לבצע **3 הצעדים בו זמנית** בלי slippage – שזה לבד בלתי אפשרי מטלפון.
+   - מנגנון שמבצע את שלושת הצעדים **בו זמנית** ללא slippage – ולבד זה
+     בלתי אפשרי מטלפון.
 
-הסורק כאן מציג את הצד התיאורטי. בעולם האמיתי, הפער בין מה שאתה רואה ל-mid של ECB
-לבין מה שאתה באמת יכול לסחור הוא **גדול יותר** מהפערית הפוטנציאלית.
+הסורק כאן מציג את הצד התיאורטי. בעולם האמיתי, הפער בין מה שאתם רואים ב-mid
+של ECB לבין מה שאתם באמת יכולים לסחור הוא **גדול יותר** מהפערית הפוטנציאלית.
 """
 )
 
 st.error(
     "⛔ **תזכורת קבועה:** אינני יועץ פיננסי. הנתונים בסורק הם **חינוכיים בלבד**. "
-    "אין כאן המלצה לבצע פעולה כלשהי בכספך."
+    "אין כאן המלצה לבצע פעולה כלשהי בכספכם."
 )
 
 st.divider()
@@ -175,10 +174,10 @@ st.divider()
 st.markdown("### 🔗 קרדיט וטכניקה")
 st.markdown(
     """
-- **המקור**: [frankfurter.app](https://www.frankfurter.app) – ECB reference rates, חינמי, בלי מפתח, בלי הגבלת קצב.
-- **רענון**: בקליק "משוך ציטוטים", עם cache של 5 דקות (כדי לא להעמיס על השרת).
-- **API endpoint**: `https://api.frankfurter.app/latest?from=EUR&to=USD`.
-- **תיעוד מלא**: github.com/lmauertal/frankfurter.
+- **המקור**: [frankfurter.app](https://www.frankfurter.app) – שערי ייחוס של
+  ה-ECB, חינמי, ללא צורך במפתח, ללא הגבלת קצב.
+- **רענון**: בלחיצה על "משוך ציטוטים", עם cache של 5 דקות (כדי לא להעמיס על השרת).
+- **API Endpoint**: `https://api.frankfurter.app/latest?from=EUR&to=USD`.
 """
 )
 
