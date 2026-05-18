@@ -40,6 +40,7 @@ modules = [
     ("6️⃣", "ברוקרים ועמלות",            "Market Maker / STP / ECN, Spread, Commission, Swap – העלות האמיתית."),
     ("7️⃣", "סורק מט\"ח חי",              "פיד יומי חינמי מ-ECB דרך frankfurter.app, חישוב Implied מול Market."),
     ("8️⃣", "ניהול סיכונים",             "Execution, Latency, Broker, Counterparty Risk, ומחשבון Risk of Ruin."),
+    ("🔎",  "כלי איתור ברוקרים",         "רגולטורים, ברוקרים מפוקחים לפי מדינה, צ'קליסט בדיקה ודגלים אדומים."),
 ]
 
 for emoji, title, desc in modules:
