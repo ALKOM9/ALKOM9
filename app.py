@@ -8,7 +8,7 @@ Streamlit Cloud points to this file. It handles:
 
 Modules live in pages/ as a native Streamlit multipage app.
 """
-from utils.page import bootstrap
+from utils.page import bootstrap, page_end
 import streamlit as st
 
 
@@ -54,8 +54,8 @@ with st.expander("🔒 פרטיות וגישה"):
     st.markdown(
         """
 - הסיסמה מאוחסנת ב-**Streamlit Secrets**, לא בקוד.
-- ה-repo ב-GitHub שלך **פרטי** – אף אחד לא רואה את הקוד.
-- אין שמירת נתונים, אין קוקיז ארוכי טווח, אין מעקב.
+- הקוד עצמו ציבורי – אבל הסיסמה לא נמצאת בקוד, היא נשמרת בנפרד ב-Streamlit.
+- אין שמירת נתוני משתמשים, אין קוקיז ארוכי טווח, אין מעקב.
 - כדי להחליף סיסמה: Streamlit Cloud → Settings → Secrets.
 """
     )
@@ -68,3 +68,5 @@ with st.expander("❓ עזרה ופתרון בעיות"):
 - בעיה אחרת? צלם מסך ושלח לי (Claude) – אתקן.
 """
     )
+
+page_end()

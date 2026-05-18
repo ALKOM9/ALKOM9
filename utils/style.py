@@ -95,6 +95,66 @@ body { overflow-x: hidden; }
 
 /* Lock icon */
 .lock-emoji { font-size: 2.4rem; display: block; text-align: center; margin: 0.5rem 0; }
+
+/* Persistent disclaimer ribbon at top of every page */
+.disclaimer-ribbon {
+    background: #3a1f1f;
+    border: 1px solid #c0392b;
+    color: #ffd5cf;
+    border-radius: 10px;
+    padding: 0.7rem 0.9rem;
+    margin: 0 0 1rem 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+.disclaimer-ribbon strong { color: #fff; }
+.disclaimer-ribbon .he { direction: rtl; text-align: right; }
+.disclaimer-ribbon .en {
+    direction: ltr;
+    text-align: left;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed #c0392b;
+}
+
+/* Footer disclaimer */
+.disclaimer-footer {
+    margin-top: 2.5rem;
+    padding: 1rem;
+    background: #1a1d24;
+    border: 1px solid #2a2f3a;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: #aab2c0;
+    line-height: 1.55;
+}
+.disclaimer-footer .he { direction: rtl; text-align: right; }
+.disclaimer-footer .en {
+    direction: ltr;
+    text-align: left;
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed #2a2f3a;
+}
+
+/* Sidebar disclaimer */
+.sidebar-disclaimer {
+    background: #2a1818;
+    border: 1px solid #8b2e2e;
+    color: #ffd5cf;
+    border-radius: 8px;
+    padding: 0.6rem 0.7rem;
+    margin: 0.6rem 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+.sidebar-disclaimer .en {
+    direction: ltr;
+    text-align: left;
+    margin-top: 0.4rem;
+    padding-top: 0.4rem;
+    border-top: 1px dashed #8b2e2e;
+}
 </style>
 """
 

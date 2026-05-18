@@ -1,4 +1,4 @@
-from utils.page import bootstrap
+from utils.page import bootstrap, page_end
 import streamlit as st
 
 bootstrap("מודול 7 – סורק חי")
@@ -8,3 +8,5 @@ st.caption("סקריפט Binance Public API שמתריע על סטיות (ללא
 st.divider()
 
 st.info("🛠️ מודול בבנייה.")
+
+page_end()
