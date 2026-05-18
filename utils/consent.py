@@ -10,7 +10,7 @@ _HE_TEXT = """
 הקורס הזה נועד **למטרות לימוד בלבד**. הוא **אינו** ייעוץ פיננסי, ייעוץ השקעות, או ייעוץ מס.
 מחברי הקורס אינם יועצים פיננסיים מורשים, ואין כאן המלצה לבצע פעולה כלשהי בכספך.
 
-מסחר ב-Triangular Arbitrage – כמו כל מסחר במטבעות, פורקס, או קריפטו – כרוך ב**סיכון משמעותי לאובדן הון**,
+מסחר ב-Triangular Arbitrage בשוק המט"ח (פורקס) – כמו כל מסחר במטבעות – כרוך ב**סיכון משמעותי לאובדן הון**,
 כולל הפסד מעל הסכום שהושקע. השוק מאוכלס במשתתפים מקצועיים עם תשתיות HFT, קולוקיישן,
 ולטנסי מתחת למילישנייה – הזדמנויות אמיתיות נסגרות במיקרושניות, ולקמעונאי כמעט בלתי אפשרי לזכות בהן.
 
@@ -32,7 +32,7 @@ This course is for **educational purposes only**. It is **not** financial advice
 or tax advice. The authors are not licensed financial advisors, and nothing here is a
 recommendation to take any action with your money.
 
-Trading Triangular Arbitrage – like any trading in FX or crypto – carries **substantial risk of loss**,
+Trading Triangular Arbitrage in the FX (forex) market – like any currency trading – carries **substantial risk of loss**,
 potentially exceeding the amount invested. The market is dominated by professional participants with
 HFT infrastructure, colocation, and sub-millisecond latency. Real opportunities close within
 microseconds, and it is nearly impossible for a retail trader to win them consistently.

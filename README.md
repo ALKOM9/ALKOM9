@@ -1,4 +1,4 @@
-# 🔺 Triangular Arbitrage Course
+# 🔺 Triangular Arbitrage Course – Forex / מט"ח
 
 > ## ⚠️ NOT FINANCIAL ADVICE / לא ייעוץ פיננסי
 >
@@ -6,7 +6,7 @@
 > investment, or tax advisor. **Nothing in this repository is advice,
 > a recommendation, or a solicitation to take any action with your money.**
 > All content, calculators, scripts, and examples are **for educational
-> and illustrative purposes only**. Trading FX, crypto, or arbitrage carries
+> and illustrative purposes only**. Trading FX or arbitrage carries
 > substantial risk of loss — possibly all of it. Past performance does not
 > guarantee future results. Any reliance on this content is at your sole
 > risk. Consult a licensed professional before taking any action.
@@ -14,11 +14,11 @@
 > **עברית.** בעל הקורס **אינו** יועץ פיננסי, יועץ השקעות, או יועץ מס מורשה.
 > **אין בקוד או בתוכן הזה ייעוץ, אין המלצה, ואין הצעה לבצע פעולה כלשהי בכספך.**
 > כל התוכן, המחשבונים, הסקריפטים והדוגמאות הם **למטרות לימוד והמחשה בלבד**.
-> מסחר בפורקס, קריפטו, או ארביטראז' כרוך בסיכון משמעותי לאובדן הון – אולי כולו.
+> מסחר בפורקס או ארביטראז' כרוך בסיכון משמעותי לאובדן הון – אולי כולו.
 > ביצועי עבר אינם מבטיחים ביצועי עתיד. כל הסתמכות על התוכן באחריותך הבלעדית.
 > התייעץ עם בעל רישיון מתאים לפני כל פעולה.
 
-קורס אינטראקטיבי בעברית על Triangular Arbitrage, שרץ ב-Streamlit Cloud, מוגן בסיסמה, אופטימלי למובייל.
+קורס אינטראקטיבי בעברית על Triangular Arbitrage **בשוק המט"ח (פורקס) בלבד**, שרץ ב-Streamlit Cloud, מוגן בסיסמה, אופטימלי למובייל. הקורס **אינו** עוסק בקריפטו.
 
 ## Structure / מבנה
 

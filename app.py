@@ -14,14 +14,16 @@ import streamlit as st
 
 bootstrap("קורס Triangular Arbitrage")
 
-st.title("🔺 קורס Triangular Arbitrage")
-st.caption("קורס אינטראקטיבי בעברית – 8 מודולים, מחשבונים, חידונים, סורק חי.")
+st.title("🔺 קורס Triangular Arbitrage – פורקס")
+st.caption("קורס אינטראקטיבי בעברית על ארביטראז' משולש בשוק המט\"ח – 8 מודולים, מחשבונים, חידונים, סורק חי.")
 
 st.markdown(
     """
 ברוך הבא. פתח את התפריט הצדדי (☰ למעלה משמאל בטלפון) ובחר מודול להתחיל בו.
 
 אם זו פעם ראשונה – התחל ב**מודול 1**, וקרא לפי הסדר.
+
+**הקורס עוסק אך ורק בשוק המט"ח (פורקס). אין כאן תוכן על קריפטו.**
 """
 )
 
@@ -35,9 +37,9 @@ modules = [
     ("3️⃣", "זיהוי הזדמנות",            "ספרד אחרי עמלות, slippage, ניתוח bid/ask."),
     ("4️⃣", "נגד HFT",                  "מדוע הזדמנויות נסגרות במיקרושניות, colocation, latency."),
     ("5️⃣", "פינות חיות",               "זוגות אקזוטיים, שעות חפיפה בין שווקים."),
-    ("6️⃣", "Crypto Triangular",        "BTC/USDT × ETH/BTC × ETH/USDT – ארביטראז' בקריפטו."),
-    ("7️⃣", "סורק חי",                  "סקריפט Binance Public API שמתריע על סטיות."),
-    ("8️⃣", "ניהול סיכונים",            "Execution risk, latency risk, exchange risk."),
+    ("6️⃣", "ברוקרים ועמלות",          "Spread, commission, swap, slippage – למה הרווח התיאורטי נעלם אצל קמעונאי."),
+    ("7️⃣", "סורק פורקס חי",            "פיד פורקס חינמי (Yahoo / exchangerate) שמתריע על סטיות מול ה-cross המחושב."),
+    ("8️⃣", "ניהול סיכונים",            "Execution risk, latency risk, broker risk."),
 ]
 
 for emoji, title, desc in modules:

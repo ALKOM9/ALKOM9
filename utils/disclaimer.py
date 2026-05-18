@@ -29,7 +29,7 @@ _FOOTER_HTML = """
     <strong>הבהרה משפטית.</strong> בעל הקורס אינו יועץ פיננסי, אינו יועץ השקעות, ואינו יועץ מס.
     כל המידע, המחשבונים, הסקריפטים והדוגמאות באתר הם <strong>למטרות לימוד והמחשה בלבד</strong>,
     אינם מהווים ייעוץ, אינם בגדר המלצה, ואינם מתחשבים במצבך הפיננסי האישי.
-    מסחר בפורקס, קריפטו או ארביטראז' כרוך בסיכון משמעותי לאובדן הון – אולי כולו.
+    מסחר בפורקס או ארביטראז' כרוך בסיכון משמעותי לאובדן הון – אולי כולו.
     ביצועי עבר אינם מבטיחים ביצועי עתיד. הסתמכות על תוכן כלשהו כאן היא באחריותך הבלעדית.
     מומלץ להתייעץ עם בעל רישיון מתאים לפני כל פעולה.
   </div>
@@ -38,7 +38,7 @@ _FOOTER_HTML = """
     or tax advisor. All information, calculators, scripts, and examples are
     <strong>for educational and illustrative purposes only</strong>, are not advice,
     are not a recommendation, and do not take your personal financial situation into account.
-    Trading FX, crypto, or arbitrage carries substantial risk of loss — possibly all of it.
+    Trading FX or arbitrage carries substantial risk of loss — possibly all of it.
     Past performance does not guarantee future results. Any reliance on content here is at
     your sole risk. Consult a licensed professional before taking any action.
   </div>
