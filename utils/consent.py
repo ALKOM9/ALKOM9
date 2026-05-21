@@ -10,17 +10,23 @@ _HE_TEXT = """
 הקורס הזה נועד **למטרות לימוד בלבד**. הוא **אינו** ייעוץ פיננסי, ייעוץ השקעות, או ייעוץ מס.
 מחברי הקורס אינם יועצים פיננסיים מורשים, ואין כאן המלצה לבצע פעולה כלשהי בכספך.
 
-מסחר ב-Triangular Arbitrage – כמו כל מסחר במטבעות, פורקס, או קריפטו – כרוך ב**סיכון משמעותי לאובדן הון**,
-כולל הפסד מעל הסכום שהושקע. השוק מאוכלס במשתתפים מקצועיים עם תשתיות HFT, קולוקיישן,
-ולטנסי מתחת למילישנייה – הזדמנויות אמיתיות נסגרות במיקרושניות, ולקמעונאי כמעט בלתי אפשרי לזכות בהן.
+**Sector Rotation** היא אסטרטגיה אקטיבית של החלפת חשיפה בין סקטורים שונים של שוק המניות
+לפי שלב המחזור הכלכלי. למרות שיש לה רקורד אקדמי ארוך, **היא לא ערובה לתשואה עודפת** מעל
+מדד רחב. אסטרטגיות מבוססות מומנטום סובלות מ-drawdowns חדים סביב נקודות מפנה בשוק,
+ויכולות להפסיד למדד שנים שלמות ברציפות. תוצאות backtest מציגות עבר – **ביצועי עבר אינם
+מבטיחים ביצועי עתיד**.
 
-ביצועי עבר **אינם** מבטיחים ביצועי עתיד. כל מחשבוני הקורס, הסקריפטים, והדוגמאות הם
-**ממחישים בלבד**, ולא מותאמים למצב הפיננסי שלך. בחירה לפעול על בסיס משהו שלמדת כאן –
-היא באחריותך הבלעדית. שקול להתייעץ עם איש מקצוע מורשה לפני כל פעולה.
+הסיווג של שלב המחזור הכלכלי בקורס הזה מתבסס על מודל הוריסטי פשוט מעל נתוני FRED.
+הוא **לא** משקף את עמדת ה-Federal Reserve, NBER, או כל גוף מקצועי אחר. אינדיקטורי מאקרו
+מתעדכנים באיחור (לפעמים חודשים) ומתוקנים – הסיווג יכול להשתנות רטרואקטיבית.
+
+כל המחשבונים, הגרפים, ההמלצות הסקטוריאליות, וה-backtests הם **ממחישים בלבד**, לא מותאמים
+למצב הפיננסי שלך. בחירה לפעול על בסיס משהו שלמדת כאן – באחריותך הבלעדית. שקול להתייעץ
+עם איש מקצוע מורשה לפני כל פעולה.
 
 על ידי לחיצה על "אני מסכים", אתה מאשר:
 - אני מעל גיל 18.
-- אני מבין שהקורס הוא חינוכי בלבד ולא ייעוץ.
+- אני מבין שהקורס חינוכי בלבד ולא ייעוץ.
 - אני מקבל אחריות מלאה על כל החלטה פיננסית שאקבל.
 - אני מבין שייתכן ואפסיד כסף, אולי את כולו.
 """
@@ -29,17 +35,23 @@ _EN_TEXT = """
 **Disclaimer & Consent – please read**
 
 This course is for **educational purposes only**. It is **not** financial advice, investment advice,
-or tax advice. The authors are not licensed financial advisors, and nothing here is a
-recommendation to take any action with your money.
+or tax advice. The authors are not licensed financial advisors, and nothing here is a recommendation
+to take any action with your money.
 
-Trading Triangular Arbitrage – like any trading in FX or crypto – carries **substantial risk of loss**,
-potentially exceeding the amount invested. The market is dominated by professional participants with
-HFT infrastructure, colocation, and sub-millisecond latency. Real opportunities close within
-microseconds, and it is nearly impossible for a retail trader to win them consistently.
+**Sector Rotation** is an active strategy of shifting exposure between equity sectors based on the
+stage of the business cycle. While it has a long academic track record, **it is not a guarantee of
+excess return** over a broad benchmark. Momentum-based strategies suffer sharp drawdowns around
+market turning points and may underperform the index for years in a row. Backtest results show the
+past – **past performance does not guarantee future results**.
 
-Past performance does **not** guarantee future results. All calculators, scripts, and examples in
-this course are **illustrative only**, not tailored to your financial situation. Acting on anything
-you learn here is **your sole responsibility**. Consult a licensed professional before taking action.
+The business-cycle phase classification used in this course is based on a simple heuristic over FRED
+data. It does **not** represent the official view of the Federal Reserve, NBER, or any other
+professional body. Macro indicators are released with lag (sometimes months) and revised – the
+classification can change retroactively.
+
+All calculators, charts, sector recommendations, and backtests are **illustrative only**, not
+tailored to your financial situation. Acting on anything you learn here is **your sole
+responsibility**. Consult a licensed professional before taking action.
 
 By clicking "I Agree", you confirm:
 - I am at least 18 years old.
@@ -50,7 +62,6 @@ By clicking "I Agree", you confirm:
 
 
 def require_consent() -> bool:
-    """Render the bilingual consent gate. Stops the script if not accepted."""
     if st.session_state.get(_SESSION_FLAG):
         return True
 
