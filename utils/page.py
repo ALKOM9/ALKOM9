@@ -11,10 +11,10 @@ from utils.consent import require_consent
 from utils.style import inject_global_styles
 
 
-def bootstrap(page_title: str = "קורס Triangular Arbitrage") -> None:
+def bootstrap(page_title: str = "קורס Sector Rotation") -> None:
     st.set_page_config(
         page_title=page_title,
-        page_icon="🔺",
+        page_icon="🔄",
         layout="centered",
         initial_sidebar_state="auto",
     )
