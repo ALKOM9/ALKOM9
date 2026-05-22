@@ -53,7 +53,8 @@ WHEEL: list[tuple[str, float, str]] = [
     ("XLF", 0, "התאוששות מוקדמת"),
     ("XLY", 30, "התאוששות מוקדמת"),
     ("XLI", 75, "אמצע מחזור"),
-    ("XLK", 105, "אמצע מחזור"),
+    ("XLC", 90, "אמצע מחזור"),
+    ("XLK", 110, "אמצע מחזור"),
     ("XLB", 150, "סוף מחזור"),
     ("XLE", 180, "סוף מחזור"),
     ("XLP", 215, "שיא שוק"),
@@ -104,8 +105,8 @@ fig_wheel.add_trace(
         textfont=dict(size=13, color="#ffffff"),
         marker=dict(
             size=46,
-            color=["#2ecc71", "#2ecc71", "#3498db", "#3498db", "#f39c12",
-                   "#f39c12", "#9b59b6", "#9b59b6", "#e74c3c", "#1abc9c"],
+            color=["#2ecc71", "#2ecc71", "#3498db", "#3498db", "#3498db",
+                   "#f39c12", "#f39c12", "#9b59b6", "#9b59b6", "#e74c3c", "#1abc9c"],
             line=dict(color="#0e1117", width=2),
         ),
         hovertext=m_hover,
@@ -156,8 +157,8 @@ fig_wheel.update_layout(
 st.plotly_chart(fig_wheel, use_container_width=True, config={"displayModeBar": False})
 
 st.caption(
-    "סדר הגלגל (עם כיוון השעון מ-12): XLF → XLY → XLI → XLK → XLB → XLE → "
-    "XLP → XLV → XLU → ובחזרה ל-XLF. ריחוף על נקודה חושף שם סקטור והשלב."
+    "סדר הגלגל (עם כיוון השעון מ-12): XLF → XLY → XLI → XLC → XLK → XLB → XLE → "
+    "XLP → XLV → XLU → XLRE → ובחזרה ל-XLF. ריחוף על נקודה חושף שם סקטור והשלב."
 )
 
 

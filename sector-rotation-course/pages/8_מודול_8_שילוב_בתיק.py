@@ -11,7 +11,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from utils.market import BENCHMARK, SECTOR_TICKERS, SECTORS
+from utils.market import BENCHMARK, SECTORS
 from utils.page import bootstrap
 from utils.quiz import render_quiz
 from utils.style import page_header

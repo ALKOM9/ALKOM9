@@ -13,7 +13,7 @@ import streamlit as st
 from utils.page import bootstrap
 from utils.style import page_header
 from utils.quiz import render_quiz
-from utils.market import SECTORS, SECTOR_TICKERS
+from utils.market import SECTORS
 from utils.cycle import phase_to_sectors, PHASE_LABELS_HE
 
 

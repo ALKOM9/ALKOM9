@@ -610,7 +610,7 @@ TERMS: list[dict] = [
             "עונתיות – CPI YoY הוא הציטוט הסטנדרטי לאינפלציה כי הוא משווה אוקטובר השנה לאוקטובר "
             "שעבר."
         ),
-        "see_also": ["Month-over-Month", "ROC"],
+        "see_also": ["Month-over-Month", "Rate of Change"],
     },
     {
         "en": "Month-over-Month",
@@ -620,7 +620,7 @@ TERMS: list[dict] = [
             "ההפרש באחוזים בין החודש הנוכחי לחודש הקודם. מגיב מהר יותר מ-YoY אבל רגיש לעונתיות, "
             "ולכן נתוני MoM של אינפלציה ומכירות מפורסמים תמיד גם בגרסה Seasonally Adjusted (SA)."
         ),
-        "see_also": ["Year-over-Year", "ROC"],
+        "see_also": ["Year-over-Year", "Rate of Change"],
     },
     {
         "en": "Rate of Change",
