@@ -34,7 +34,7 @@
 מלא:
 - **Repository:** `alkom9/alkom9` (או `sector-rotation-course` אם הקמת ריפו חדש)
 - **Branch:** `claude/sector-rotation-course-ZUjlo`
-- **Main file path:** `app.py`
+- **Main file path:** `sector-rotation-course/app.py` *(שים לב לתיקייה!)*
 - **App URL:** בחר משהו כמו `my-sector-course` (זה יהפוך לכתובת `my-sector-course.streamlit.app`)
 
 לחץ **Deploy**. Streamlit יבנה את הסביבה תוך 1–2 דקות. *בכניסה הראשונה תראה מסך נעילה – זה תקין. נמשיך לצעד 3 שיפעיל אותו.*
