@@ -1,53 +1,36 @@
 # STATE.md — Turkish for Hebrew Speakers Course Progress
 
-## Current Phase: Phase 3/4 — Content production + quality verification
-## Last Action: Committed and pushed 136 files. Agents running for remaining gaps.
+## Current Phase: Phase 3 — Content production (near completion)
+## Last Action: 160 files committed and pushed. Agent running for final 11 lesson gaps.
 
-## File Inventory (as of latest commit)
+## File Inventory
 
-| Component | Done | Target | % |
-|-----------|------|--------|---|
-| **Research** | 4 | 4 | 100% |
-| **Grammar tracks** | 4 | 4 | 100% |
-| **L01 A1.1 lessons** | 12 | 12 | 100% |
-| **L02 A1.2 lessons** | 9 | 12 | 75% |
-| **L03 A2 lessons** | 6 | 12 | 50% |
-| **L04 B1 lessons** | 6 | 12 | 50% |
-| **L05 B2 lessons** | 4 | 10 | 40% |
-| **L06 C1 lessons** | 6 | 10 | 60% |
-| **Audio L01** | 12 | 12 | 100% |
-| **Audio L02** | 12 | 12 | 100% |
-| **Audio L03** | 12 | 12 | 100% |
-| **Audio L04** | 12 | 12 | 100% |
-| **Audio L05** | 10 | 10 | 100% |
-| **Audio L06** | 0 | 10 | 0% |
-| **Cultural notes** | 15 | 15 | 100% |
-| **Tests** | 6 | 6 | 100% |
-| **SRS schedule** | 1 | 1 | 100% |
-| **Vocab list** | 1 | 1 | 100% |
-| **README** | 1 | 1 | 100% |
-| **CITATIONS** | 1 | 1 | 100% |
-| **QUALITY_REPORT** | 1 | 1 | 100% |
+| Component | Done | Target | Status |
+|-----------|------|--------|--------|
+| Research | 4 | 4 | ✅ |
+| Grammar tracks | 4 | 4 | ✅ |
+| L01 A1.1 lessons | 12 | 12 | ✅ |
+| L02 A1.2 lessons | 12 | 12 | ✅ |
+| L03 A2 lessons | 8 | 12 | 67% — missing 09-12 |
+| L04 B1 lessons | 11 | 12 | 92% — missing 12 |
+| L05 B2 lessons | 4 | 10 | 40% — missing 05-10 |
+| L06 C1 lessons | 10 | 10 | ✅ |
+| Audio L01-L06 | 68 | 68 | ✅ |
+| Cultural notes | 15 | 15 | ✅ |
+| Tests | 6 | 6 | ✅ |
+| SRS schedule | 1 | 1 | ✅ |
+| Vocab list | 1 | 1 | ✅ |
+| README | 1 | 1 | ✅ |
+| CITATIONS | 1 | 1 | ✅ |
+| QUALITY_REPORT | 1 | 1 | ✅ |
 
-**Total: 136 files created**
-
-## Missing Lessons (to be completed)
-- L02: lessons 10, 11, 12
-- L03: lessons 07-12
-- L04: lessons 07-12
-- L05: lessons 05-10
-- L06: lessons 07-10
-- Audio L06: all 10
-
-## Quality Verification
-- All existing lessons verified: 14 sections each, YAML front matter, answer keys present
-- All existing audio scripts: proper format with Hebrew answers
-- Tests: 6/6 complete with answer keys and CEFR rubrics
-- SRS schedule: JSON valid, 20+ grammar items tracked
+**Total: 160 files. Missing: 11 lessons (L03: 4, L04: 1, L05: 6)**
 
 ## To Resume
-1. Read this STATE.md
-2. Check which files are missing (list above)
-3. Create missing lessons following the same template
-4. Update QUALITY_REPORT.md
-5. Commit and push
+1. Create missing files:
+   - /course/level-03-A2/lesson-09.md through lesson-12.md
+   - /course/level-04-B1/lesson-12.md
+   - /course/level-05-B2/lesson-05.md through lesson-10.md
+2. Each lesson follows the 14-section template (see README.md)
+3. Update QUALITY_REPORT.md
+4. Commit and push
