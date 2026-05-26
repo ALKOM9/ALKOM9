@@ -1,0 +1,286 @@
+{
+  "description": "Spaced repetition schedule based on Cepeda et al. 2008 — optimal inter-study intervals for long-term retention. Each review is scheduled at N+offset where N is the lesson of introduction.",
+  "intervals": {
+    "R1": "N+1",
+    "R2": "N+3",
+    "R3": "N+7",
+    "R4": "N+16",
+    "R5": "N+35"
+  },
+  "grammar_items": [
+    {
+      "item": "present_continuous",
+      "name_tr": "Şimdiki Zaman (-Iyor)",
+      "name_he": "הווה ממשיך",
+      "introduced": "L01-02",
+      "reviews": ["L01-03", "L01-05", "L01-09", "L02-06", "L03-12"]
+    },
+    {
+      "item": "past_definite",
+      "name_tr": "Geçmiş Zaman (-DI)",
+      "name_he": "עבר מוחלט",
+      "introduced": "L01-04",
+      "reviews": ["L01-05", "L01-07", "L01-11", "L02-08", "L03-14"]
+    },
+    {
+      "item": "var_yok",
+      "name_tr": "Var/Yok",
+      "name_he": "ישנו / אין",
+      "introduced": "L01-03",
+      "reviews": ["L01-04", "L01-06", "L01-10", "L02-07", "L03-13"]
+    },
+    {
+      "item": "nominative_accusative",
+      "name_tr": "Yalın Hâl ve Belirtme Hâli (-I)",
+      "name_he": "נקוב ומושא ישיר",
+      "introduced": "L01-03",
+      "reviews": ["L01-04", "L01-06", "L01-10", "L02-07", "L03-13"]
+    },
+    {
+      "item": "dative_case",
+      "name_tr": "Yönelme Hâli (-A)",
+      "name_he": "יחסת כיוון (Dative)",
+      "introduced": "L01-05",
+      "reviews": ["L01-06", "L01-08", "L01-12", "L02-09", "L04-01"]
+    },
+    {
+      "item": "locative_ablative",
+      "name_tr": "Bulunma (-DA) ve Ayrılma (-DAn) Hâlleri",
+      "name_he": "יחסת מיקום ומקור",
+      "introduced": "L01-06",
+      "reviews": ["L01-07", "L01-09", "L01-13", "L02-10", "L04-02"]
+    },
+    {
+      "item": "genitive_possessive",
+      "name_tr": "İyelik ve Tamlama (-In, -Im/-In/-I)",
+      "name_he": "שייכות ונסמך-סומך",
+      "introduced": "L01-07",
+      "reviews": ["L01-08", "L01-10", "L01-14", "L02-11", "L04-03"]
+    },
+    {
+      "item": "vowel_harmony",
+      "name_tr": "Ünlü Uyumu",
+      "name_he": "הרמוניית תנועות",
+      "introduced": "L01-01",
+      "reviews": ["L01-02", "L01-04", "L01-08", "L02-05", "L03-11"]
+    },
+    {
+      "item": "future_tense",
+      "name_tr": "Gelecek Zaman (-(y)AcAK)",
+      "name_he": "עתיד",
+      "introduced": "L02-01",
+      "reviews": ["L02-02", "L02-04", "L02-08", "L03-05", "L04-11"]
+    },
+    {
+      "item": "aorist",
+      "name_tr": "Geniş Zaman (-(A/I)r)",
+      "name_he": "אאוריסט",
+      "introduced": "L02-03",
+      "reviews": ["L02-04", "L02-06", "L02-10", "L03-07", "L04-13"]
+    },
+    {
+      "item": "evidential_past",
+      "name_tr": "Duyulan Geçmiş Zaman (-mIş)",
+      "name_he": "עבר שמועה",
+      "introduced": "L02-05",
+      "reviews": ["L02-06", "L02-08", "L02-12", "L03-09", "L05-01"]
+    },
+    {
+      "item": "ability",
+      "name_tr": "Yeterlilik (-(y)AbIlmek)",
+      "name_he": "יכולת",
+      "introduced": "L02-07",
+      "reviews": ["L02-08", "L02-10", "L02-14", "L03-11", "L05-03"]
+    },
+    {
+      "item": "comparatives_superlatives",
+      "name_tr": "Karşılaştırma (daha/en)",
+      "name_he": "השוואה והפלגה",
+      "introduced": "L02-09",
+      "reviews": ["L02-10", "L02-12", "L03-04", "L03-13", "L05-05"]
+    },
+    {
+      "item": "compound_tenses",
+      "name_tr": "Birleşik Zamanlar",
+      "name_he": "זמנים מורכבים",
+      "introduced": "L03-01",
+      "reviews": ["L03-02", "L03-04", "L03-08", "L04-05", "L05-11"]
+    },
+    {
+      "item": "conditional",
+      "name_tr": "Koşul (-sA / -sAydI)",
+      "name_he": "תנאי",
+      "introduced": "L03-03",
+      "reviews": ["L03-04", "L03-06", "L03-10", "L04-07", "L05-13"]
+    },
+    {
+      "item": "necessitative",
+      "name_tr": "Gereklilik (-mAlI / lazım / gerek)",
+      "name_he": "הכרחיות",
+      "introduced": "L03-05",
+      "reviews": ["L03-06", "L03-08", "L03-12", "L04-09", "L06-01"]
+    },
+    {
+      "item": "passive",
+      "name_tr": "Edilgen (-(I)l / -(I)n)",
+      "name_he": "סביל",
+      "introduced": "L03-07",
+      "reviews": ["L03-08", "L03-10", "L03-14", "L04-11", "L06-03"]
+    },
+    {
+      "item": "causative",
+      "name_tr": "Ettirgen (-DIr / -t / -Ir)",
+      "name_he": "גרימה",
+      "introduced": "L03-09",
+      "reviews": ["L03-10", "L03-12", "L04-04", "L04-13", "L06-05"]
+    },
+    {
+      "item": "participles_an",
+      "name_tr": "Sıfat-fiil (-(y)An)",
+      "name_he": "בינונית נושא",
+      "introduced": "L04-01",
+      "reviews": ["L04-02", "L04-04", "L04-08", "L05-05", "L06-11"]
+    },
+    {
+      "item": "participles_dik",
+      "name_tr": "Sıfat-fiil (-DIK)",
+      "name_he": "בינונית מושא",
+      "introduced": "L04-02",
+      "reviews": ["L04-03", "L04-05", "L04-09", "L05-06", "L06-12"]
+    },
+    {
+      "item": "participles_acak",
+      "name_tr": "Sıfat-fiil (-(y)AcAK)",
+      "name_he": "בינונית עתיד",
+      "introduced": "L04-03",
+      "reviews": ["L04-04", "L04-06", "L04-10", "L05-07", "L06-13"]
+    },
+    {
+      "item": "verbal_nouns_mak_ma",
+      "name_tr": "İsim-fiil (-mAK / -mA)",
+      "name_he": "שמות פועל (מופשט/קונקרטי)",
+      "introduced": "L04-04",
+      "reviews": ["L04-05", "L04-07", "L04-11", "L05-08", "L06-14"]
+    },
+    {
+      "item": "verbal_nouns_dik_is",
+      "name_tr": "İsim-fiil (-DIK / -(y)Iş)",
+      "name_he": "שמות פועל (עובדה/אופן)",
+      "introduced": "L04-05",
+      "reviews": ["L04-06", "L04-08", "L04-12", "L05-09", "L06-15"]
+    },
+    {
+      "item": "compound_verbs",
+      "name_tr": "Birleşik Fiiller (etmek, olmak, yapmak, vermek, almak)",
+      "name_he": "פעלים מורכבים",
+      "introduced": "L04-06",
+      "reviews": ["L04-07", "L04-09", "L04-13", "L05-10", "L06-16"]
+    },
+    {
+      "item": "formal_register",
+      "name_tr": "Resmî Üslup",
+      "name_he": "רגיסטר רשמי",
+      "introduced": "L04-10",
+      "reviews": ["L04-11", "L04-13", "L05-05", "L05-14", "L06-20"]
+    },
+    {
+      "item": "concessive_clauses",
+      "name_tr": "Karşıtlık Cümleleri (-sA dA / rağmen / halde)",
+      "name_he": "פסוקיות ויתור",
+      "introduced": "L05-02",
+      "reviews": ["L05-03", "L05-05", "L05-09", "L06-06", "L06-24"]
+    },
+    {
+      "item": "literary_register",
+      "name_tr": "Yazı Dili / Edebî Üslup",
+      "name_he": "רגיסטר ספרותי",
+      "introduced": "L05-01",
+      "reviews": ["L05-02", "L05-04", "L05-08", "L06-05", "L06-23"]
+    },
+    {
+      "item": "complex_embeddings",
+      "name_tr": "Karmaşık Gömülü Yapılar",
+      "name_he": "שיבוצים מורכבים",
+      "introduced": "L05-06",
+      "reviews": ["L05-07", "L05-09", "L05-13", "L06-10", "L06-28"]
+    },
+    {
+      "item": "zarf_fiil_advanced",
+      "name_tr": "Zarf-fiiller (-(y)ArAk, -(y)Ip, -(y)IncA, -(y)AsIyA)",
+      "name_he": "תארי-פועל מתקדמים",
+      "introduced": "L05-04",
+      "reviews": ["L05-05", "L05-07", "L05-11", "L06-08", "L06-26"]
+    },
+    {
+      "item": "academic_register",
+      "name_tr": "Akademik Üslup",
+      "name_he": "רגיסטר אקדמי",
+      "introduced": "L06-01",
+      "reviews": ["L06-02", "L06-04", "L06-08", "L06-17", "L06-36"]
+    },
+    {
+      "item": "idioms_proverbs",
+      "name_tr": "Deyimler ve Atasözleri",
+      "name_he": "ביטויים ופתגמים",
+      "introduced": "L06-03",
+      "reviews": ["L06-04", "L06-06", "L06-10", "L06-19", "L06-38"]
+    },
+    {
+      "item": "advanced_syntax",
+      "name_tr": "İleri Düzey Sözdizimi",
+      "name_he": "תחביר מתקדם",
+      "introduced": "L06-05",
+      "reviews": ["L06-06", "L06-08", "L06-12", "L06-21", "L06-40"]
+    }
+  ],
+  "vocabulary_tiers": {
+    "tier1": {
+      "range": "1-1000",
+      "frequency_label": "High-frequency core vocabulary",
+      "target": "active by A2",
+      "min_reviews": 5,
+      "levels": ["A1.1", "A1.2", "A2"],
+      "notes": "Includes greetings, numbers, colors, family, body, food, daily routines, basic adjectives/adverbs, question words, postpositions"
+    },
+    "tier2": {
+      "range": "1001-3000",
+      "frequency_label": "Mid-frequency functional vocabulary",
+      "target": "active by B2",
+      "min_reviews": 3,
+      "levels": ["A2", "B1", "B2"],
+      "notes": "Includes work/career, health, travel, media, emotions, opinions, abstract nouns, formal connectors, compound verb components"
+    },
+    "tier3": {
+      "range": "3001-5000",
+      "frequency_label": "Lower-frequency academic/literary vocabulary",
+      "target": "receptive by C1",
+      "min_reviews": 2,
+      "levels": ["B2", "C1"],
+      "notes": "Includes academic terms (araştırma, varsayım, kanıtlamak), literary expressions, archaic forms, domain-specific terminology, idiomatic expressions"
+    }
+  },
+  "review_policies": {
+    "forgotten_item": "If an item is forgotten at review Rn, reset to R1 and restart the schedule from that point",
+    "easy_item": "If an item is answered correctly and quickly at Rn, skip to Rn+2",
+    "hard_item": "If an item is answered correctly but with difficulty, keep normal schedule but add an extra mini-review at N+2 after the current review",
+    "new_item_limit": "Maximum 8 new grammar items per lesson; maximum 15 new vocabulary items per lesson"
+  },
+  "cross_references": {
+    "test_files": [
+      "tests/test-A1.1.md",
+      "tests/test-A1.2.md",
+      "tests/test-A2.md",
+      "tests/test-B1.md",
+      "tests/test-B2.md",
+      "tests/test-C1.md"
+    ],
+    "level_mapping": {
+      "L01": "level-01-A1.1",
+      "L02": "level-02-A1.2",
+      "L03": "level-03-A2",
+      "L04": "level-04-B1",
+      "L05": "level-05-B2",
+      "L06": "level-06-C1"
+    }
+  }
+}

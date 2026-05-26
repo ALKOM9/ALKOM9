@@ -1,0 +1,401 @@
+rank,lemma,pos,hebrew,english,example_sentence,lesson_introduced,tier
+1,bir,det/num,אחד/a,one/a,"Bir çay lütfen.",L01-01,1
+2,bu,pron/det,זה/הזה,this,"Bu ev güzel.",L01-01,1
+3,da/de,conj,גם,also,"Ben de geldim.",L01-02,1
+4,ve,conj,ו,and,"Ali ve Ayşe",L01-01,1
+5,için,postp,בשביל/עבור,for,"Senin için aldım.",L01-06,1
+6,ile,postp,עם,with,"Seninle geldim.",L01-06,1
+7,o,pron,הוא/היא/זה,he/she/it/that,"O çok güzel.",L01-01,1
+8,ne,pron,מה,what,"Ne istiyorsun?",L01-02,1
+9,var,adj/v,יש,there is/exist,"Sütümüz var.",L01-03,1
+10,yok,adj,אין,there isn't/not exist,"Param yok.",L01-03,1
+11,çok,adv/adj,הרבה/מאוד,very/much,"Çok teşekkürler.",L01-01,1
+12,ama,conj,אבל,but,"Güzel ama pahalı.",L01-04,1
+13,her,det,כל,every,"Her gün çalışıyorum.",L01-05,1
+14,daha,adv,עוד/יותר,more,"Daha büyük.",L01-08,1
+15,şu,pron,זה (הלז),that (over there),"Şu adam kim?",L01-04,1
+16,ki,conj,ש,that (conjunction),"Biliyorum ki gelecek.",L02-03,1
+17,en,adv,הכי,most (superlative),"En güzel şehir.",L01-10,1
+18,ya,conj/interj,או,or/well,"Ya sen ya ben.",L02-01,1
+19,hem,conj,גם,both/also,"Hem güzel hem akıllı.",L02-05,1
+20,gibi,postp,כמו,like/as,"Sen gibi.",L02-02,1
+21,gün,n,יום,day,"Bugün güzel bir gün.",L01-02,1
+22,zaman,n,זמן,time,"Zaman çok hızlı geçiyor.",L01-03,1
+23,yıl,n,שנה,year,"Bu yıl Türkiye'ye gideceğim.",L01-07,1
+24,ev,n,בית,house/home,"Evde kimse yok.",L01-01,1
+25,su,n,מים,water,"Bir bardak su lütfen.",L01-03,1
+26,iş,n,עבודה,work/job,"İşe gidiyorum.",L01-06,1
+27,göz,n,עין,eye,"Gözlerin çok güzel.",L02-04,1
+28,el,n,יד,hand,"Ellerini yıka.",L01-09,1
+29,baş,n,ראש,head,"Başım ağrıyor.",L02-03,1
+30,söz,n,מילה/הבטחה,word/promise,"Söz verdim.",L02-02,1
+31,yol,n,דרך,way/road,"Bu yol nereye gidiyor?",L01-08,1
+32,adam,n,איש/אדם,man,"O adam kim?",L01-04,1
+33,kadın,n,אישה,woman,"O kadın doktor.",L01-04,1
+34,çocuk,n,ילד,child,"Çocuklar parkta oynuyor.",L01-04,1
+35,yer,n,מקום,place,"Güzel bir yer.",L01-05,1
+36,şey,n,דבר,thing,"Bir şey söylemek istiyorum.",L01-05,1
+37,ara,n/v,בין/ביניים,between/interval,"Arada bir geliyorum.",L02-04,1
+38,para,n,כסף,money,"Param yok.",L01-09,1
+39,dünya,n,עולם,world,"Dünya çok büyük.",L01-07,1
+40,hayat,n,חיים,life,"Hayat güzel.",L01-07,1
+41,insan,n,אדם/בן-אנוש,human,"İnsan çok ilginç bir varlık.",L01-07,1
+42,şehir,n,עיר,city,"İstanbul büyük bir şehir.",L01-08,1
+43,kapı,n,דלת,door,"Kapıyı aç.",L01-09,1
+44,oda,n,חדר,room,"Odamda bir yatak var.",L02-01,1
+45,yüz,n/num,פנים/מאה,face/hundred,"Yüzü güzel; yüz kişi.",L02-02,1
+46,ses,n,קול,voice/sound,"Sesini duydum.",L02-05,1
+47,akşam,n,ערב,evening,"Akşam yemeği yedik.",L01-05,1
+48,sabah,n,בוקר,morning,"Sabah erken kalktım.",L01-05,1
+49,gece,n,לילה,night,"Gece çok soğuk.",L01-05,1
+50,saat,n,שעה,hour/clock,"Saat kaç?",L01-03,1
+51,olmak,v,להיות/להפוך,to be/become,"Mutlu olmak istiyorum.",L01-02,1
+52,etmek,v,לעשות,to do/make,"Yardım etmek.",L01-06,1
+53,demek,v,לומר/להגיד,to say,"Ne demek istiyorsun?",L01-06,1
+54,gelmek,v,לבוא,to come,"Eve gel.",L01-02,1
+55,gitmek,v,ללכת,to go,"Okula gidiyorum.",L01-02,1
+56,görmek,v,לראות,to see,"Seni gördüm.",L01-08,1
+57,bilmek,v,לדעת,to know,"Bilmiyorum.",L01-04,1
+58,vermek,v,לתת,to give,"Bana ver.",L01-09,1
+59,almak,v,לקחת/לקנות,to take/buy,"Bir kahve aldım.",L01-06,1
+60,yapmak,v,לעשות/להכין,to make/do,"Ne yapıyorsun?",L01-03,1
+61,istemek,v,לרצות,to want,"Su istiyorum.",L01-03,1
+62,bakmak,v,להסתכל,to look,"Bana bak.",L01-08,1
+63,bulmak,v,למצוא,to find,"Anahtarımı bulamıyorum.",L02-03,1
+64,durmak,v,לעמוד/לעצור,to stand/stop,"Burada dur.",L02-01,1
+65,kalmak,v,להישאר,to stay/remain,"Evde kaldım.",L02-02,1
+66,başlamak,v,להתחיל,to begin,"Derse başlıyoruz.",L01-10,1
+67,düşünmek,v,לחשוב,to think,"Ne düşünüyorsun?",L02-03,1
+68,çıkmak,v,לצאת,to go out,"Dışarı çıkıyorum.",L02-01,1
+69,konuşmak,v,לדבר,to speak,"Türkçe konuşmak istiyorum.",L01-04,1
+70,yazmak,v,לכתוב,to write,"Mektup yazıyorum.",L01-10,1
+71,okumak,v,לקרוא,to read,"Kitap okuyorum.",L01-10,1
+72,oturmak,v,לשבת/לגור,to sit/live,"Ankara'da oturuyorum.",L01-08,1
+73,anlamak,v,להבין,to understand,"Anlamıyorum.",L01-04,1
+74,beklemek,v,לחכות,to wait,"Beni bekle.",L02-02,1
+75,açmak,v,לפתוח,to open,"Pencereyi aç.",L01-09,1
+76,büyük,adj,גדול,big,"Büyük bir ev.",L01-04,1
+77,küçük,adj,קטן,small,"Küçük bir çocuk.",L01-04,1
+78,yeni,adj,חדש,new,"Yeni bir araba.",L01-06,1
+79,iyi,adj,טוב,good,"İyi günler.",L01-01,1
+80,güzel,adj,יפה,beautiful/nice,"Güzel bir gün.",L01-01,1
+81,eski,adj,ישן (לא חדש),old (not new),"Eski bir bina.",L01-08,1
+82,uzun,adj,ארוך/גבוה,long/tall,"Uzun bir yol.",L02-01,1
+83,kısa,adj,קצר,short,"Kısa bir süre.",L02-01,1
+84,genç,adj,צעיר,young,"Genç bir adam.",L02-04,1
+85,doğru,adj/adv,נכון/ישר,correct/straight,"Doğru söylüyorsun.",L02-02,1
+86,sonra,adv/postp,אחרי/אחר כך,after,"Yemekten sonra.",L01-06,1
+87,önce,adv/postp,לפני,before,"Yemekten önce.",L01-06,1
+88,şimdi,adv,עכשיו,now,"Şimdi ne yapıyorsun?",L01-03,1
+89,burada,adv,פה/כאן,here,"Burada otur.",L01-05,1
+90,orada,adv,שם,there,"Orada ne var?",L01-05,1
+91,nasıl,adv,איך,how,"Nasılsın?",L01-01,1
+92,neden,adv,למה,why,"Neden gelmedin?",L01-10,1
+93,nerede,adv,איפה,where,"Neredesin?",L01-05,1
+94,ne zaman,adv,מתי,when,"Ne zaman geleceksin?",L02-06,1
+95,kim,pron,מי,who,"Kim geldi?",L01-10,1
+96,iki,num,שתיים,two,"İki çay lütfen.",L01-03,1
+97,üç,num,שלוש,three,"Üç kişiyiz.",L01-03,1
+98,dört,num,ארבע,four,"Dört mevsim.",L01-07,1
+99,beş,num,חמש,five,"Beş dakika bekle.",L01-07,1
+100,on,num,עשר,ten,"On lira.",L01-07,1
+101,altı,num,שש,six,"Altı kişi.",L01-07,1
+102,yedi,num,שבע,seven,"Yedi gün.",L01-07,1
+103,sekiz,num,שמונה,eight,"Sekiz saat.",L01-07,1
+104,dokuz,num,תשע,nine,"Dokuz ay.",L01-07,1
+105,sıfır,num,אפס,zero,"Sıfır derece.",L01-07,1
+106,yüz,num,מאה,hundred,"Yüz lira.",L02-06,1
+107,bin,num,אלף,thousand,"Bin yıl.",L02-06,1
+108,kendi,pron,עצמו,self/own,"Kendim yaptım.",L02-05,1
+109,biz,pron,אנחנו,we,"Biz Türkçe öğreniyoruz.",L01-02,1
+110,siz,pron,אתם/אתן,you (pl/formal),"Siz nerelisiniz?",L01-02,1
+111,onlar,pron,הם/הן,they,"Onlar geliyor.",L01-04,1
+112,ben,pron,אני,I,"Ben öğrenciyim.",L01-01,1
+113,sen,pron,אתה/את,you (sg),"Sen nerelisin?",L01-01,1
+114,benim,pron,שלי,my/mine,"Benim adım Ali.",L01-01,1
+115,senin,pron,שלך,your/yours,"Senin adın ne?",L01-01,1
+116,onun,pron,שלו/שלה,his/her/its,"Onun evi büyük.",L01-05,1
+117,böyle,adv,ככה,like this,"Böyle yapma.",L02-03,1
+118,öyle,adv,ככה (הלז),like that,"Öyle deme.",L02-03,1
+119,kadar,postp,עד/כל כך,until/as much as,"Akşama kadar.",L02-04,1
+120,bile,adv,אפילו,even,"Ben bile bilmiyorum.",L02-05,1
+121,hep,adv,תמיד,always,"Hep böyle yapıyor.",L02-01,1
+122,hiç,adv,אף פעם/בכלל,never/at all,"Hiç gitmedim.",L02-01,1
+123,belki,adv,אולי,maybe,"Belki yarın gelirim.",L02-02,1
+124,artık,adv,כבר (מעתה),anymore/now,"Artık gidiyorum.",L02-04,1
+125,sadece,adv,רק,only,"Sadece su istiyorum.",L01-09,1
+126,hâlâ,adv,עדיין,still,"Hâlâ bekliyorum.",L02-05,1
+127,tabii,adv,כמובן,of course,"Tabii ki.",L02-02,1
+128,evet,interj,כן,yes,"Evet geliyorum.",L01-01,1
+129,hayır,interj,לא,no,"Hayır istemiyorum.",L01-01,1
+130,tamam,interj,בסדר,okay,"Tamam anladım.",L01-01,1
+131,teşekkür,n,תודה,thanks,"Teşekkür ederim.",L01-01,1
+132,lütfen,adv,בבקשה,please,"Bir çay lütfen.",L01-01,1
+133,merhaba,interj,שלום,hello,"Merhaba nasılsın?",L01-01,1
+134,günaydın,interj,בוקר טוב,good morning,"Günaydın!",L01-01,1
+135,iyi akşamlar,phrase,ערב טוב,good evening,"İyi akşamlar.",L01-01,1
+136,iyi geceler,phrase,לילה טוב,good night,"İyi geceler.",L01-01,1
+137,hoşça kal,phrase,להתראות,goodbye (to stayer),"Hoşça kal!",L01-01,1
+138,güle güle,phrase,להתראות,goodbye (to leaver),"Güle güle!",L01-01,1
+139,yemek,n/v,אוכל/לאכול,food/to eat,"Yemek yiyorum.",L01-03,1
+140,içmek,v,לשתות,to drink,"Çay içiyorum.",L01-03,1
+141,sevmek,v,לאהוב,to love,"Seni seviyorum.",L01-10,1
+142,öğrenmek,v,ללמוד,to learn,"Türkçe öğreniyorum.",L01-04,1
+143,öğretmek,v,ללמד,to teach,"Bana öğret.",L02-06,1
+144,çalışmak,v,לעבוד/ללמוד,to work/study,"Çok çalışıyorum.",L01-06,1
+145,uyumak,v,לישון,to sleep,"Erken uyuyorum.",L02-01,1
+146,kalkmak,v,לקום,to get up,"Erken kalkıyorum.",L02-01,1
+147,girmek,v,להיכנס,to enter,"Eve girdi.",L02-03,1
+148,koşmak,v,לרוץ,to run,"Parkta koşuyorum.",L02-06,1
+149,yürümek,v,ללכת/לצעוד,to walk,"Yürüyerek gidiyorum.",L02-04,1
+150,taşımak,v,לשאת/להעביר,to carry,"Çantayı taşı.",L02-06,1
+151,anne,n,אמא,mother,"Annem evde.",L01-04,1
+152,baba,n,אבא,father,"Babam çalışıyor.",L01-04,1
+153,kardeş,n,אח/אחות,sibling,"Kardeşim küçük.",L01-09,1
+154,arkadaş,n,חבר,friend,"Arkadaşım Ali.",L01-04,1
+155,öğretmen,n,מורה,teacher,"Öğretmenim çok iyi.",L01-04,1
+156,öğrenci,n,תלמיד,student,"Ben öğrenciyim.",L01-02,1
+157,okul,n,בית ספר,school,"Okula gidiyorum.",L01-06,1
+158,kitap,n,ספר,book,"Kitap okuyorum.",L01-03,1
+159,masa,n,שולחן,table,"Masada bir kitap var.",L01-09,1
+160,sandalye,n,כיסא,chair,"Sandalyede otur.",L02-01,1
+161,araba,n,מכונית,car,"Arabam yok.",L01-08,1
+162,otobüs,n,אוטובוס,bus,"Otobüse biniyorum.",L02-02,1
+163,dolmuş,n,דולמוש (שירות),shared taxi,"Dolmuşla gidiyorum.",L02-06,1
+164,uçak,n,מטוס,airplane,"Uçakla gidiyorum.",L02-06,1
+165,kahve,n,קפה,coffee,"Bir kahve lütfen.",L01-03,1
+166,çay,n,תה,tea,"Çay içiyorum.",L01-03,1
+167,ekmek,n,לחם,bread,"Ekmek aldım.",L01-09,1
+168,peynir,n,גבינה,cheese,"Peynir çok lezzetli.",L02-01,1
+169,yumurta,n,ביצה,egg,"Yumurta seviyorum.",L02-01,1
+170,et,n,בשר,meat,"Et yemiyorum.",L02-04,1
+171,sebze,n,ירקות,vegetable,"Sebze yiyorum.",L02-04,1
+172,meyve,n,פרי,fruit,"Meyve al.",L02-04,1
+173,hastane,n,בית חולים,hospital,"Hastaneye gidiyorum.",L02-05,1
+174,doktor,n,רופא,doctor,"Doktora gittim.",L01-08,1
+175,hasta,adj/n,חולה,sick/patient,"Hastayım.",L02-03,1
+176,sağlık,n,בריאות,health,"Sağlık önemli.",L02-05,1
+177,hava,n,אוויר/מזג אוויר,air/weather,"Hava güzel.",L01-10,1
+178,soğuk,adj,קר,cold,"Hava çok soğuk.",L01-10,1
+179,sıcak,adj,חם,hot,"Hava sıcak.",L01-10,1
+180,güneş,n,שמש,sun,"Güneş çıktı.",L02-04,1
+181,yağmur,n,גשם,rain,"Yağmur yağıyor.",L01-10,1
+182,kar,n,שלג,snow,"Kar yağıyor.",L02-06,1
+183,renk,n,צבע,color,"Bu renk güzel.",L02-03,1
+184,beyaz,adj,לבן,white,"Beyaz bir ev.",L02-03,1
+185,siyah,adj,שחור,black,"Siyah bir araba.",L02-03,1
+186,kırmızı,adj,אדום,red,"Kırmızı bir gül.",L02-03,1
+187,mavi,adj,כחול,blue,"Deniz mavi.",L02-03,1
+188,yeşil,adj,ירוק,green,"Yeşil bir park.",L02-03,1
+189,sarı,adj,צהוב,yellow,"Sarı bir çiçek.",L02-06,1
+190,aç,adj,רעב,hungry,"Çok açım.",L02-01,1
+191,tok,adj,שבע,full (not hungry),"Teşekkürler toğum.",L02-01,1
+192,yorgun,adj,עייף,tired,"Çok yorgunum.",L02-01,1
+193,mutlu,adj,שמח,happy,"Çok mutluyum.",L02-02,1
+194,üzgün,adj,עצוב,sad,"Üzgünüm.",L02-02,1
+195,korkak,adj,פחדן,coward,"Korkak değilim.",L02-06,1
+196,zengin,adj,עשיר,rich,"Zengin bir adam.",L02-05,1
+197,fakir,adj,עני,poor,"Fakir ama mutlu.",L02-05,1
+198,meşgul,adj,עסוק,busy,"Çok meşgulüm.",L02-04,1
+199,serbest,adj,חופשי/פנוי,free,"Yarın serbestim.",L02-05,1
+200,hazır,adj,מוכן,ready,"Hazır mısın?",L02-02,1
+201,dil,n,שפה/לשון,language/tongue,"Kaç dil biliyorsun?",L01-04,1
+202,Türkçe,n/adj,טורקית,Turkish,"Türkçe öğreniyorum.",L01-01,1
+203,İbranice,n/adj,עברית,Hebrew,"İbranice biliyorum.",L01-01,1
+204,ülke,n,מדינה,country,"Türkiye güzel bir ülke.",L01-08,1
+205,millet,n,אומה/עם,nation,"Türk milleti.",L03-02,1
+206,devlet,n,מדינה (ריבונית),state,"Türk devleti.",L03-05,1
+207,hükümet,n,ממשלה,government,"Hükümet karar verdi.",L03-08,1
+208,kanun,n,חוק,law,"Kanuna göre.",L03-08,1
+209,hak,n,זכות,right,"İnsan hakları.",L03-05,1
+210,problem,n,בעיה,problem,"Bir problemim var.",L02-05,1
+211,soru,n,שאלה,question,"Bir sorum var.",L01-10,1
+212,cevap,n,תשובה,answer,"Cevabı bilmiyorum.",L01-10,1
+213,ders,n,שיעור,lesson,"Derse geç kaldım.",L01-06,1
+214,sınıf,n,כיתה,class,"Sınıfta kaç öğrenci var?",L02-06,1
+215,üniversite,n,אוניברסיטה,university,"Üniversitede okuyorum.",L02-06,1
+216,tarih,n,היסטוריה/תאריך,history/date,"Tarih çok ilginç.",L03-02,1
+217,bilim,n,מדע,science,"Bilim önemli.",L03-05,1
+218,sanat,n,אמנות,art,"Sanat güzel.",L03-05,1
+219,müzik,n,מוזיקה,music,"Müzik dinliyorum.",L02-04,1
+220,film,n,סרט,film,"Film izliyorum.",L02-04,1
+221,gazete,n,עיתון,newspaper,"Gazete okuyorum.",L02-06,1
+222,telefon,n,טלפון,phone,"Telefon çalıyor.",L01-09,1
+223,bilgisayar,n,מחשב,computer,"Bilgisayarda çalışıyorum.",L02-06,1
+224,internet,n,אינטרנט,internet,"İnternete giriyorum.",L02-06,1
+225,resim,n,תמונה/ציור,picture/painting,"Resim çiziyorum.",L02-05,1
+226,fotoğraf,n,צילום,photograph,"Fotoğraf çekiyorum.",L02-05,1
+227,sokak,n,רחוב,street,"Sokakta yürüyorum.",L02-02,1
+228,cadde,n,שדרה,avenue,"Cadde çok geniş.",L03-01,1
+229,köprü,n,גשר,bridge,"Köprüden geçtik.",L03-01,1
+230,deniz,n,ים,sea,"Deniz çok güzel.",L02-04,1
+231,dağ,n,הר,mountain,"Dağa çıktık.",L02-06,1
+232,orman,n,יער,forest,"Ormanda yürüdük.",L03-01,1
+233,nehir,n,נהר,river,"Nehir çok uzun.",L03-01,1
+234,göl,n,אגם,lake,"Göl çok güzel.",L03-01,1
+235,bahçe,n,גינה,garden,"Bahçede oturuyoruz.",L02-03,1
+236,park,n,פארק,park,"Parkta oynuyoruz.",L01-08,1
+237,market,n,סופרמרקט,market/supermarket,"Markete gidiyorum.",L01-09,1
+238,dükkân,n,חנות/דוכן,shop,"Dükkânı açtı.",L02-05,1
+239,fiyat,n,מחיר,price,"Fiyat ne kadar?",L02-02,1
+240,ucuz,adj,זול,cheap,"Bu ucuz.",L02-02,1
+241,pahalı,adj,יקר,expensive,"Bu çok pahalı.",L02-02,1
+242,almak,v,לקנות/לקחת,to buy/take,"Bir ekmek aldım.",L01-06,1
+243,satmak,v,למכור,to sell,"Arabamı sattım.",L03-02,1
+244,ödemek,v,לשלם,to pay,"Hesabı ödedim.",L02-06,1
+245,aile,n,משפחה,family,"Ailem büyük.",L01-09,1
+246,eş,n,בן/בת זוג,spouse,"Eşim doktor.",L02-05,1
+247,kız,n,ילדה/בת,girl/daughter,"Kızım okula gidiyor.",L01-04,1
+248,oğul,n,בן,son,"Oğlum küçük.",L02-03,1
+249,abla,n,אחות גדולה,older sister,"Ablam evli.",L02-05,1
+250,ağabey,n,אח גדול,older brother,"Ağabeyim İstanbul'da.",L02-05,1
+251,amca,n,דוד (מצד אב),uncle (paternal),"Amcam geldi.",L03-02,1
+252,teyze,n,דודה (מצד אם),aunt (maternal),"Teyzem aradı.",L03-02,1
+253,komşu,n,שכן,neighbor,"Komşumuz çok iyi.",L02-06,1
+254,misafir,n,אורח,guest,"Misafir geldi.",L03-01,1
+255,hediye,n,מתנה,gift,"Hediye aldım.",L03-01,1
+256,doğum günü,n,יום הולדת,birthday,"Doğum günün kutlu olsun.",L02-06,1
+257,düğün,n,חתונה,wedding,"Düğüne gittik.",L03-05,1
+258,bayram,n,חג,holiday/festival,"Bayramınız kutlu olsun.",L03-02,1
+259,tatil,n,חופשה,vacation/holiday,"Tatile çıkıyoruz.",L02-06,1
+260,seyahat,n,נסיעה/מסע,travel,"Seyahat etmek istiyorum.",L03-01,1
+261,otel,n,מלון,hotel,"Otelde kalıyoruz.",L03-01,1
+262,bilet,n,כרטיס,ticket,"Bilet aldım.",L03-01,1
+263,pasaport,n,דרכון,passport,"Pasaportun var mı?",L03-01,1
+264,vize,n,ויזה,visa,"Vize lazım mı?",L03-01,1
+265,ulaşmak,v,להגיע,to reach,"Eve ulaştım.",L03-02,1
+266,binmek,v,לעלות/לנסוע ב,to get on/ride,"Otobüse bindim.",L02-02,1
+267,inmek,v,לרדת,to get off,"Otobüsten indim.",L02-04,1
+268,dönmek,v,לחזור/להסתובב,to return/turn,"Eve döndüm.",L02-04,1
+269,geçmek,v,לעבור,to pass,"Zaman çabuk geçiyor.",L02-03,1
+270,hatırlamak,v,לזכור,to remember,"Seni hatırlıyorum.",L03-02,1
+271,unutmak,v,לשכוח,to forget,"Şifremi unuttum.",L03-02,1
+272,seçmek,v,לבחור,to choose,"Birini seç.",L03-05,1
+273,toplamak,v,לאסוף,to collect/gather,"Çiçek topladım.",L03-05,1
+274,değiştirmek,v,לשנות/להחליף,to change,"Fikir değiştirdim.",L03-05,1
+275,kullanmak,v,להשתמש,to use,"Telefon kullanıyorum.",L02-06,1
+276,taşınmak,v,לעבור דירה,to move (house),"Yeni eve taşındık.",L03-05,1
+277,yardım,n,עזרה,help,"Yardım eder misiniz?",L01-08,1
+278,sorun,n,בעיה,problem/issue,"Bir sorun mu var?",L02-05,1
+279,çözüm,n,פתרון,solution,"Çözüm buldum.",L03-08,1
+280,karar,n,החלטה,decision,"Karar verdim.",L03-02,1
+281,sonuç,n,תוצאה,result,"Sonuçlar açıklandı.",L03-05,1
+282,sebep,n,סיבה,reason/cause,"Sebebi ne?",L03-02,1
+283,amaç,n,מטרה,goal/purpose,"Amacım Türkçe öğrenmek.",L03-05,1
+284,fırsat,n,הזדמנות,opportunity,"İyi bir fırsat.",L03-08,1
+285,tehlike,n,סכנה,danger,"Tehlikeli bir durum.",L03-08,1
+286,güvenlik,n,ביטחון,security/safety,"Güvenlik önemli.",L03-08,1
+287,özgürlük,n,חירות,freedom,"Özgürlük değerli.",L04-05,1
+288,barış,n,שלום,peace,"Barış istiyoruz.",L04-05,1
+289,savaş,n,מלחמה,war,"Savaş bitti.",L04-05,1
+290,kültür,n,תרבות,culture,"Türk kültürü zengin.",L03-08,1
+291,gelenek,n,מסורת,tradition,"Güzel bir gelenek.",L03-08,1
+292,din,n,דת,religion,"Din ve vicdan özgürlüğü.",L04-05,1
+293,ekonomi,n,כלכלה,economy,"Ekonomi büyüyor.",L04-08,1
+294,piyasa,n,שוק,market (financial),"Piyasa düştü.",L05-05,1
+295,maaş,n,משכורת,salary,"Maaşım az.",L04-02,1
+296,vergi,n,מס,tax,"Vergi ödüyoruz.",L04-08,1
+297,meslek,n,מקצוע,profession,"Mesleğin ne?",L03-02,1
+298,avukat,n,עורך דין,lawyer,"Avukat olmak istiyorum.",L03-08,1
+299,mühendis,n,מהנדס,engineer,"Mühendis olacağım.",L03-08,1
+300,doğa,n,טבע,nature,"Doğa güzel.",L03-05,1
+301,çevre,n,סביבה,environment,"Çevreyi koruyalım.",L04-05,2
+302,kirli,adj,מלוכלך,dirty,"Hava kirli.",L03-08,2
+303,temiz,adj,נקי,clean,"Oda temiz.",L02-06,2
+304,sessiz,adj,שקט,quiet,"Sessiz ol.",L03-01,2
+305,gürültü,n,רעש,noise,"Gürültü yapma.",L03-05,2
+306,dikkat,n,תשומת לב,attention,"Dikkat et!",L02-05,2
+307,merak,n,סקרנות,curiosity,"Merak ediyorum.",L03-01,2
+308,korkmak,v,לפחד,to fear,"Korkma!",L03-01,2
+309,kızmak,v,לכעוס,to get angry,"Bana kızma.",L03-02,2
+310,gülmek,v,לצחוק,to laugh,"Çok güldük.",L02-06,2
+311,ağlamak,v,לבכות,to cry,"Ağlama!",L03-02,2
+312,şaşırmak,v,להתפלא,to be surprised,"Çok şaşırdım.",L03-05,2
+313,özlemek,v,להתגעגע,to miss,"Seni özledim.",L03-05,2
+314,affetmek,v,לסלוח,to forgive,"Beni affet.",L03-08,2
+315,kabul etmek,v,לקבל (הסכמה),to accept,"Kabul ediyorum.",L03-08,2
+316,reddetmek,v,לסרב/לדחות,to refuse/reject,"Teklifi reddetti.",L04-02,2
+317,önermek,v,להציע,to suggest,"Ne önerirsin?",L04-02,2
+318,tartışmak,v,להתווכח/לדון,to argue/discuss,"Bu konuyu tartışalım.",L04-05,2
+319,katılmak,v,להשתתף/להסכים,to participate/agree,"Toplantıya katıldım.",L04-02,2
+320,şikayet,n,תלונה,complaint,"Şikayetim var.",L04-02,2
+321,memnun,adj,מרוצה,pleased/satisfied,"Memnun oldum.",L03-01,2
+322,endişe,n,דאגה,concern/worry,"Endişelenme.",L04-02,2
+323,umut,n,תקווה,hope,"Umudumu kaybetmedim.",L04-05,2
+324,hayal,n,חלום/דמיון,dream/imagination,"Hayalim gerçek oldu.",L04-05,2
+325,gerçek,adj/n,אמיתי/מציאות,real/reality,"Bu gerçek mi?",L03-01,2
+326,yalan,n/adj,שקר,lie,"Yalan söyleme.",L03-05,2
+327,doğru,adj,נכון/אמת,true/correct,"Doğru söylüyorsun.",L02-02,2
+328,yanlış,adj/n,שגוי/טעות,wrong/mistake,"Yanlış yaptın.",L02-05,2
+329,kolay,adj,קל,easy,"Türkçe kolay.",L02-04,2
+330,zor,adj,קשה,difficult,"Bu soru zor.",L02-04,2
+331,mümkün,adj,אפשרי,possible,"Bu mümkün mü?",L03-02,2
+332,imkânsız,adj,בלתי אפשרי,impossible,"İmkânsız değil.",L03-08,2
+333,gerekli,adj,נחוץ/דרוש,necessary,"Bu gerekli.",L03-05,2
+334,önemli,adj,חשוב,important,"Çok önemli bir konu.",L02-05,2
+335,ilginç,adj,מעניין,interesting,"İlginç bir kitap.",L02-06,2
+336,sıkıcı,adj,משעמם,boring,"Film sıkıcıydı.",L03-01,2
+337,lezzetli,adj,טעים,delicious,"Çok lezzetli.",L02-04,2
+338,acı,adj/n,חריף/כאב,spicy/pain,"Acı yemek sevmiyorum.",L03-02,2
+339,tatlı,adj/n,מתוק/קינוח,sweet/dessert,"Tatlı ister misiniz?",L02-04,2
+340,tuzlu,adj,מלוח,salty,"Çok tuzlu.",L03-01,2
+341,açık,adj,פתוח/בהיר,open/light (color),"Kapı açık.",L02-03,2
+342,kapalı,adj,סגור,closed,"Dükkân kapalı.",L02-05,2
+343,geniş,adj,רחב,wide,"Geniş bir cadde.",L03-05,2
+344,dar,adj,צר,narrow,"Dar bir sokak.",L03-05,2
+345,derin,adj,עמוק,deep,"Derin bir göl.",L03-08,2
+346,yüksek,adj,גבוה,high,"Yüksek bir dağ.",L03-02,2
+347,alçak,adj,נמוך,low,"Alçak bir duvar.",L03-08,2
+348,hızlı,adj/adv,מהיר,fast,"Çok hızlı gidiyor.",L02-06,2
+349,yavaş,adj/adv,איטי,slow,"Yavaş yavaş.",L02-06,2
+350,erken,adj/adv,מוקדם,early,"Erken kalktım.",L02-01,2
+351,geç,adj/adv,מאוחר,late,"Geç kaldım.",L02-01,2
+352,yakın,adj,קרוב,near/close,"Buraya yakın.",L02-04,2
+353,uzak,adj,רחוק,far,"Çok uzak.",L02-04,2
+354,beraber,adv,יחד,together,"Beraber gidelim.",L03-01,2
+355,ayrı,adj,נפרד,separate,"Ayrı oturuyoruz.",L03-08,2
+356,güçlü,adj,חזק,strong,"Güçlü bir adam.",L03-05,2
+357,zayıf,adj,חלש/רזה,weak/thin,"Zayıf düştü.",L03-08,2
+358,kalın,adj,עבה,thick,"Kalın bir kitap.",L04-02,2
+359,ince,adj,דק/עדין,thin/delicate,"İnce bir ses.",L04-02,2
+360,sert,adj,קשה/תקיף,hard/strict,"Sert bir adam.",L04-02,2
+361,yumuşak,adj,רך,soft,"Yumuşak bir yastık.",L04-02,2
+362,kuru,adj,יבש,dry,"Hava kuru.",L03-08,2
+363,ıslak,adj,רטוב,wet,"Yol ıslak.",L03-08,2
+364,dolu,adj,מלא,full,"Bardak dolu.",L03-01,2
+365,boş,adj,ריק,empty,"Oda boş.",L03-01,2
+366,ağır,adj,כבד,heavy,"Çanta çok ağır.",L03-02,2
+367,hafif,adj,קל (משקל),light (weight),"Hafif bir yemek.",L03-02,2
+368,taze,adj,טרי,fresh,"Taze ekmek.",L03-01,2
+369,bayat,adj,מיושן (אוכל),stale,"Ekmek bayat.",L04-02,2
+370,yaşlı,adj,מבוגר/זקן,old (person),"Yaşlı bir adam.",L02-06,2
+371,taraf,n,צד/כיוון,side/direction,"Bu tarafta.",L03-05,2
+372,kısım,n,חלק,part/section,"Bu kısım zor.",L04-02,2
+373,parça,n,חתיכה,piece,"Bir parça ekmek.",L03-02,2
+374,tür,n,סוג,type/kind,"Bu tür bir şey.",L04-02,2
+375,şekil,n,צורה,shape/form,"Ne şekilde?",L04-05,2
+376,durum,n,מצב,situation,"Durum ne?",L03-01,2
+377,olay,n,אירוע,event/incident,"İlginç bir olay.",L03-08,2
+378,konu,n,נושא,subject/topic,"Bu konu önemli.",L03-01,2
+379,fikir,n,רעיון,idea,"İyi bir fikir.",L03-02,2
+380,düşünce,n,מחשבה,thought,"Düşüncelerimi paylaştım.",L04-02,2
+381,bilgi,n,מידע/ידע,information/knowledge,"Bilgi edindim.",L03-05,2
+382,haber,n,חדשות,news,"Haberleri izledim.",L02-06,2
+383,toplum,n,חברה,society,"Toplum değişiyor.",L04-05,2
+384,toplantı,n,פגישה/אסיפה,meeting,"Toplantıya gidiyorum.",L04-02,2
+385,ilişki,n,יחסים/קשר,relationship,"İyi bir ilişki.",L04-05,2
+386,bağlantı,n,חיבור/קשר,connection,"İnternet bağlantısı yok.",L04-08,2
+387,etki,n,השפעה,effect/influence,"Büyük bir etki.",L04-08,2
+388,değer,n,ערך,value,"Büyük bir değer.",L04-05,2
+389,anlam,n,משמעות,meaning,"Anlamı ne?",L03-02,2
+390,örnek,n,דוגמה,example,"Bir örnek ver.",L03-05,2
+391,süre,n,משך זמן,duration,"Uzun bir süre.",L03-05,2
+392,dönem,n,תקופה,period/term,"Bu dönemde.",L04-05,2
+393,yüzyıl,n,מאה (תקופה),century,"Yirmi birinci yüzyıl.",L04-08,2
+394,gelecek,n/adj,עתיד,future,"Gelecek güzel olacak.",L03-08,2
+395,geçmiş,n/adj,עבר,past,"Geçmişi düşünme.",L03-08,2
+396,bugün,adv,היום,today,"Bugün ne yapıyorsun?",L01-05,2
+397,yarın,adv,מחר,tomorrow,"Yarın görüşürüz.",L01-06,2
+398,dün,adv,אתמול,yesterday,"Dün ne yaptın?",L01-08,2
+399,hafta,n,שבוע,week,"Bu hafta meşgulüm.",L01-07,2
+400,ay,n,חודש/ירח,month/moon,"Bu ay tatildeyim.",L01-07,2
