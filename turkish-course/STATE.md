@@ -1,33 +1,31 @@
-# STATE.md — Turkish for Hebrew Speakers Course Progress
+# STATE.md — Turkish for Hebrew Speakers Course
 
-## Current Phase: Phase 3/4 — Near completion
-## Status: 63/68 lessons complete. Agent running for final 5.
+## Status: COMPLETE
 
-## File Inventory (166 files total)
+All 68 lessons across 6 CEFR levels created and quality-verified.
 
-| Component | Done | Target | Status |
-|-----------|------|--------|--------|
-| L01 A1.1 | 12 | 12 | ✅ |
-| L02 A1.2 | 12 | 12 | ✅ |
-| L03 A2 | 11 | 12 | 92% — missing lesson-12 |
-| L04 B1 | 12 | 12 | ✅ |
-| L05 B2 | 6 | 10 | 60% — missing 07-10 |
-| L06 C1 | 10 | 10 | ✅ |
-| Audio (all levels) | 68 | 68 | ✅ |
-| Cultural notes | 15 | 15 | ✅ |
-| Tests | 6 | 6 | ✅ |
-| SRS + Vocab + Grammar | 10 | 10 | ✅ |
-| README + CITATIONS | 2 | 2 | ✅ |
+## Final Inventory (171 files)
+
+| Component | Count | Status |
+|-----------|-------|--------|
+| L01 A1.1 lessons | 12/12 | ✅ |
+| L02 A1.2 lessons | 12/12 | ✅ |
+| L03 A2 lessons | 12/12 | ✅ |
+| L04 B1 lessons | 12/12 | ✅ |
+| L05 B2 lessons | 10/10 | ✅ |
+| L06 C1 lessons | 10/10 | ✅ |
+| Audio scripts (all) | 68/68 | ✅ |
+| Cultural notes | 15/15 | ✅ |
+| Diagnostic tests | 6/6 | ✅ |
+| Grammar tracks | 4/4 | ✅ |
+| SRS schedule | 1/1 | ✅ |
+| Vocab master list | 1/1 | ✅ |
+| Research files | 4/4 | ✅ |
+| README + CITATIONS | 2/2 | ✅ |
+| QUALITY_REPORT | 1/1 | ✅ |
 
 ## Quality Verification
-- 63/63 existing lessons: 14 sections each ✅
-- 63/63: YAML front matter ✅
-- 63/63: answer keys present ✅
-- Turkish diacritics (ç,ğ,ı,ö,ş,ü): used in all 63 ✅
-
-## Missing (5 files)
-- /course/level-03-A2/lesson-12.md
-- /course/level-05-B2/lesson-07.md
-- /course/level-05-B2/lesson-08.md
-- /course/level-05-B2/lesson-09.md
-- /course/level-05-B2/lesson-10.md
+- 68/68 lessons: 14 sections each ✅
+- 68/68 lessons: YAML front matter ✅
+- 68/68 lessons: answer keys with elaborative feedback ✅
+- Turkish diacritics (ç,ğ,ı,ö,ş,ü) consistent ✅
