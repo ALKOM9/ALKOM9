@@ -95,7 +95,7 @@ prerequisite_lessons: [01]
 - אחרי תנועה אחורית → **da**: Ali **da**, okul**da**
 
 **שגיאות נפוצות צפויות**:
-1. ❌ *geliyorlar* — נכון: geliyor**lar** (לא *geliyorlar*, אלא... בעצם שניהם נכונים כתיב. אבל ההגייה: /ɡe.li.joɾ.ˈlaɾ/)
+1. שימו לב: **geliyorlar** = כתיב תקין. ההגייה: /ɡe.li.joɾ.ˈlaɾ/. בגוף שלישי רבים, הסיומת -lar/-ler אופציונלית בשפה מדוברת: **geliyorlar** = **geliyor** (כשההקשר ברור).
 2. ❌ *yapıyorium* — נכון: yapıyor**um**. הסיומת היא -um (לא -ium).
 3. ❌ *evlar* — נכון: ev**ler** (e = קדמי → -ler, לא -lar!)
 

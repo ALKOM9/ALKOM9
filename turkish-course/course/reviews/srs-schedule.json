@@ -19,29 +19,29 @@
       "item": "past_definite",
       "name_tr": "Geçmiş Zaman (-DI)",
       "name_he": "עבר מוחלט",
-      "introduced": "L01-04",
-      "reviews": ["L01-05", "L01-07", "L01-11", "L02-08", "L03-14"]
+      "introduced": "L01-06",
+      "reviews": ["L01-07", "L01-09", "L02-01", "L02-10", "L03-12"]
     },
     {
       "item": "var_yok",
       "name_tr": "Var/Yok",
       "name_he": "ישנו / אין",
       "introduced": "L01-03",
-      "reviews": ["L01-04", "L01-06", "L01-10", "L02-07", "L03-13"]
+      "reviews": ["L01-04", "L01-06", "L01-10", "L02-07", "L03-12"]
     },
     {
       "item": "nominative_accusative",
       "name_tr": "Yalın Hâl ve Belirtme Hâli (-I)",
       "name_he": "נקוב ומושא ישיר",
-      "introduced": "L01-03",
-      "reviews": ["L01-04", "L01-06", "L01-10", "L02-07", "L03-13"]
+      "introduced": "L01-06",
+      "reviews": ["L01-07", "L01-09", "L02-01", "L02-10", "L03-12"]
     },
     {
       "item": "dative_case",
       "name_tr": "Yönelme Hâli (-A)",
       "name_he": "יחסת כיוון (Dative)",
-      "introduced": "L01-05",
-      "reviews": ["L01-06", "L01-08", "L01-12", "L02-09", "L04-01"]
+      "introduced": "L01-08",
+      "reviews": ["L01-09", "L01-11", "L02-03", "L02-12", "L04-07"]
     },
     {
       "item": "locative_ablative",

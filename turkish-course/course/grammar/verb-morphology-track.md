@@ -16,11 +16,15 @@
 
 ### דוגמה מלאה
 ```
-gel-e-me-yebil-ecek-ti-m       mi?
-STEM-ABIL-NEG-ABIL-FUT-PAST-1SG  Q
+gel-eme-yecek-ti-m       mi?
+STEM-NEG.ABIL-FUT-PAST-1SG  Q
+"האם לא הייתי עומד לבוא?"
 
-"האם לא הייתי יכול לבוא?"
+gel-ebil-ecek-ti-m       mi?
+STEM-ABIL-FUT-PAST-1SG  Q
+"האם הייתי יכול לבוא?"
 ```
+**שימו לב**: שלילת יכולת = -EmE (לא *-Ebil-mE). gelememek = לא להיות מסוגל לבוא.
 
 ---
 

@@ -178,12 +178,12 @@ gel-me-miş-ti-m 1SG
 ### דירוג קושי: **גבוה מאוד**
 ### אסטרטגיה:
 - הצגה הדרגתית:
-  - A1.1: present continuous (-yor), past definite (-di)
-  - A1.2: future (-acak), imperative, aorist
-  - A2: evidential past (-miş), necessitative (-meli)
-  - B1: conditional (-se), optative, compound tenses (miş + ti)
-  - B2: participial forms, verbal nouns
-  - C1: literary/formal tenses, full mastery
+  - A1.1: present continuous (-yor), past definite (-di), imperative, copula
+  - A1.2: future (-acak), evidential past (-miş), aorist (-(A/I)r), ability (-(y)Ebil)
+  - A2: necessitative (-meli), conditional (-se), passive (-(I)l), causative (-DIr), participles intro
+  - B1: compound tenses (miş+ti, yor+du), verbal nouns fully, optative, reciprocal/reflexive expanded
+  - B2: literary tenses, concessive clauses, complex nominalization
+  - C1: academic register, dialectal awareness, full mastery
 - מערכת חריצים ויזואלית בכל שיעור
 - מסלול ייעודי: /grammar/verb-morphology-track.md
 
