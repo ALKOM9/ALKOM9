@@ -1,0 +1,626 @@
+//@version=6
+// =============================================================================
+// Confluence Engine Pro — Weighted Multi-Indicator Strategy (Pine Script v6)
+// -----------------------------------------------------------------------------
+// A production-grade STRATEGY (not an indicator) that detects entries, exits and
+// stop-losses from a weighted multi-indicator confluence engine.
+//
+// Design goals: maximise risk:reward on liquid, trending stocks and ETFs.
+//
+// NO repaint / NO lookahead:
+//   - All higher-timeframe data uses request.security(..., lookahead=barmerge.lookahead_off)
+//   - Entries are gated on barstate.isconfirmed
+//   - calc_on_every_tick = false
+//
+// HONEST WARNING (read this):
+//   This script combines MANY indicators plus an adaptive heuristic weighting
+//   layer. That is a HIGH overfitting-risk design. Only OUT-OF-SAMPLE (OOS)
+//   results are meaningful. Any window with fewer than ~20-30 trades is
+//   statistically meaningless. This is NOT machine learning and NOT AI, and it
+//   does NOT guarantee profits. Validate everything out-of-sample.
+// =============================================================================
+
+// --- Inputs that feed the strategy() header (declared early so we can use them) -
+icap          = input.float(100000, "Initial Capital ($)",          group="00 • Engine / Costs", tooltip="Starting account equity for the backtest.")
+commPct       = input.float(0.03,   "Commission (%)",  step=0.01,    group="00 • Engine / Costs", tooltip="Per-side commission in percent. Default 0.03% is realistic for liquid US equities/ETFs at a discount broker.")
+slipTicks     = input.int(2,        "Slippage (ticks)",             group="00 • Engine / Costs", tooltip="Assumed slippage per fill in ticks. 2 ticks is conservative for liquid names.")
+pyrInput      = input.int(0,        "Pyramiding (max stacked entries)", minval=0, maxval=5, group="00 • Engine / Costs", tooltip="0 = one position at a time (recommended). >0 allows stacking, which changes risk math.")
+
+strategy(
+     title                 = "Confluence Engine Pro",
+     shorttitle            = "ConflPro",
+     overlay               = true,
+     pyramiding            = pyrInput,
+     initial_capital       = icap,
+     default_qty_type      = strategy.fixed,
+     default_qty_value      = 1,
+     commission_type       = strategy.commission.percent,
+     commission_value      = commPct,
+     slippage              = slipTicks,
+     calc_on_every_tick    = false,
+     calc_on_order_fills   = false,
+     process_orders_on_close = false,
+     max_bars_back         = 5000,
+     max_labels_count      = 500,
+     max_lines_count       = 500,
+     max_boxes_count       = 100)
+
+// =============================================================================
+// DIRECTION MODE
+// =============================================================================
+dirMode = input.string("Long Only", "Trade Direction", options=["Long Only", "Short Only", "Both"], group="01 • Direction", tooltip="Stocks/ETFs have long-term upward drift, so Long Only is the default. Short Only / Both are for advanced use.")
+allowLong  = dirMode == "Long Only" or dirMode == "Both"
+allowShort = dirMode == "Short Only" or dirMode == "Both"
+
+// =============================================================================
+// MODULE 1 — MULTI-INDICATOR CONFLUENCE ENGINE
+// Each indicator emits a directional score in {-1, 0, +1}, multiplied by an
+// (adaptive) weight. Indices are FIXED and shared with the adaptive module:
+//   0 EMA cross | 1 Ichimoku | 2 Supertrend            (TREND)
+//   3 RSI       | 4 MACD     | 5 Stochastic            (MOMENTUM)
+//   6 Bollinger                                        (VOLATILITY)
+//   7 VWAP      | 8 OBV      | 9 Volume spike          (VOLUME)
+// ADX and ATR% are GATES (not scored, not weighted).
+// =============================================================================
+NIND = 10
+indNames = array.from("EMA", "Ichimoku", "Supertrend", "RSI", "MACD", "Stoch", "Bollinger", "VWAP", "OBV", "VolSpike")
+
+// ---- TREND inputs
+emaFastLen = input.int(20,  "EMA Fast",  minval=1, group="10 • Trend", inline="ema", tooltip="Fast EMA. Bullish when fast > slow.")
+emaSlowLen = input.int(50,  "EMA Slow",  minval=1, group="10 • Trend", inline="ema")
+adxLen     = input.int(14,  "ADX/DMI Length", minval=1, group="10 • Trend", inline="adx", tooltip="ADX is used as a STRENGTH GATE. No entries when ADX < ADX Min (chop filter).")
+adxMin     = input.float(20, "ADX Min (gate)", minval=0, group="10 • Trend", inline="adx")
+ichiTenkan = input.int(9,   "Ichimoku Tenkan", minval=1, group="10 • Trend", inline="ichi", tooltip="Ichimoku conversion/base lengths. Score = price vs cloud + Tenkan/Kijun cross.")
+ichiKijun  = input.int(26,  "Kijun", minval=1, group="10 • Trend", inline="ichi")
+ichiSpanB  = input.int(52,  "Span B", minval=1, group="10 • Trend", inline="ichi")
+stFactor   = input.float(3.0, "Supertrend Factor", step=0.1, group="10 • Trend", inline="st", tooltip="Supertrend ATR multiplier and ATR length.")
+stAtrLen   = input.int(10,  "ST ATR", minval=1, group="10 • Trend", inline="st")
+
+// ---- MOMENTUM inputs
+rsiLen   = input.int(14, "RSI Length", minval=1, group="11 • Momentum", inline="rsi", tooltip="RSI: bullish above 50 midline, but neutralised in the overbought zone (exhaustion). Mirror for shorts.")
+rsiOb    = input.int(70, "RSI OB", group="11 • Momentum", inline="rsi")
+rsiOs    = input.int(30, "RSI OS", group="11 • Momentum", inline="rsi")
+macdFast = input.int(12, "MACD Fast", minval=1, group="11 • Momentum", inline="macd", tooltip="MACD line/signal cross + histogram direction.")
+macdSlow = input.int(26, "MACD Slow", minval=1, group="11 • Momentum", inline="macd")
+macdSig  = input.int(9,  "MACD Signal", minval=1, group="11 • Momentum", inline="macd")
+stochLen = input.int(14, "Stoch %K", minval=1, group="11 • Momentum", inline="stoch", tooltip="Stochastic %K/%D cross, neutralised at extremes.")
+stochSm  = input.int(3,  "Stoch %D", minval=1, group="11 • Momentum", inline="stoch")
+
+// ---- VOLATILITY inputs
+bbLen   = input.int(20,  "BB Length", minval=1, group="12 • Volatility", inline="bb", tooltip="Bollinger Bands. Directional score from price vs basis plus expansion (band width rising).")
+bbMult  = input.float(2.0, "BB Mult", step=0.1, group="12 • Volatility", inline="bb")
+atrLen  = input.int(14,  "ATR Length", minval=1, group="12 • Volatility", inline="atr", tooltip="ATR drives position sizing, stops, and the volatility regime filter (ATR% = ATR/price).")
+atrMaxPct = input.float(8.0, "Max ATR% (vol filter)", step=0.1, group="12 • Volatility", inline="atr", tooltip="Skip entries when ATR/price*100 exceeds this (news spikes / too volatile).")
+
+// ---- VOLUME inputs
+useVwap   = input.bool(true, "Use VWAP", group="13 • Volume", inline="vwap", tooltip="Price above VWAP = bullish bias. On non-intraday charts VWAP may be flat; the score then contributes 0.")
+obvLen    = input.int(21,  "OBV EMA Length", minval=1, group="13 • Volume", inline="obv", tooltip="OBV trend = OBV vs its EMA.")
+volMaLen  = input.int(20,  "Volume MA Length", minval=1, group="13 • Volume", inline="vol", tooltip="Volume spike = volume > MA * multiplier, scored in the bar's direction.")
+volSpike  = input.float(1.5, "Vol Spike x", step=0.1, group="13 • Volume", inline="vol")
+
+// ---- Confluence thresholds
+longThr  = input.float(3.0,  "Long Threshold",  step=0.5, group="14 • Confluence", tooltip="Net weighted score must CROSS UP through this for a long. Higher = stricter / fewer trades.")
+shortThr = input.float(-3.0, "Short Threshold", step=0.5, group="14 • Confluence", tooltip="Net weighted score must CROSS DOWN through this for a short (negative number).")
+
+// ============================ Indicator calculations =========================
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+[diPlus, diMinus, adxVal] = ta.dmi(adxLen, adxLen)
+
+tenkan = (ta.highest(high, ichiTenkan) + ta.lowest(low, ichiTenkan)) / 2
+kijun  = (ta.highest(high, ichiKijun)  + ta.lowest(low, ichiKijun))  / 2
+spanA  = (tenkan + kijun) / 2
+spanB  = (ta.highest(high, ichiSpanB) + ta.lowest(low, ichiSpanB)) / 2
+cloudTop = math.max(spanA, spanB)
+cloudBot = math.min(spanA, spanB)
+
+[stLine, stDir] = ta.supertrend(stFactor, stAtrLen)
+
+rsiVal = ta.rsi(close, rsiLen)
+[macdLine, macdSignal, macdHist] = ta.macd(close, macdFast, macdSlow, macdSig)
+kFast = ta.stoch(close, high, low, stochLen)
+kSlow = ta.sma(kFast, stochSm)
+dSlow = ta.sma(kSlow, stochSm)
+
+[bbBasis, bbUpper, bbLower] = ta.bb(close, bbLen, bbMult)
+bbWidth = (bbUpper - bbLower) / bbBasis
+bbExpanding = bbWidth > bbWidth[1]
+
+atrVal = ta.atr(atrLen)
+atrPct = atrVal / close * 100.0
+
+vwapVal = ta.vwap
+obvVal  = ta.obv
+obvEma  = ta.ema(obvVal, obvLen)
+volMa   = ta.sma(volume, volMaLen)
+isSpike = volume > volMa * volSpike
+
+// ---- Per-indicator directional signals in {-1,0,+1} -------------------------
+sEma   = emaFast > emaSlow ? 1 : emaFast < emaSlow ? -1 : 0
+sIchi  = close > cloudTop and tenkan > kijun ? 1 : close < cloudBot and tenkan < kijun ? -1 : 0
+sSt    = stDir < 0 ? 1 : 1 == stDir ? -1 : 0
+sRsi   = rsiVal > 50 and rsiVal < rsiOb ? 1 : rsiVal < 50 and rsiVal > rsiOs ? -1 : 0
+sMacd  = macdLine > macdSignal and macdHist > 0 ? 1 : macdLine < macdSignal and macdHist < 0 ? -1 : 0
+sStoch = kSlow > dSlow and kSlow < 80 ? 1 : kSlow < dSlow and kSlow > 20 ? -1 : 0
+sBb    = close > bbBasis and bbExpanding ? 1 : close < bbBasis and bbExpanding ? -1 : 0
+sVwap  = not useVwap ? 0 : close > vwapVal ? 1 : close < vwapVal ? -1 : 0
+sObv   = obvVal > obvEma ? 1 : obvVal < obvEma ? -1 : 0
+sVol   = isSpike and close > open ? 1 : isSpike and close < open ? -1 : 0
+
+// Pack the signals into an array indexed by the fixed indicator IDs above.
+sigArr = array.from(sEma, sIchi, sSt, sRsi, sMacd, sStoch, sBb, sVwap, sObv, sVol)
+
+// =============================================================================
+// MODULE 6 — ADAPTIVE CONFLUENCE WEIGHTING  (HEURISTIC — NOT machine learning)
+// -----------------------------------------------------------------------------
+// For every CLOSED trade we update, per indicator, how often it "correctly
+// confirmed" the trade (it agreed with the trade direction AND the trade won).
+// A rolling win-rate per indicator maps to a weight inside [wMin, wMax].
+// During a warm-up of `warmupTrades` closed trades, all weights stay at 1.0.
+//
+// *** This is an ADAPTIVE HEURISTIC, NOT ML and NOT AI. It can overfit badly
+// *** and MUST be validated out-of-sample. Use the master toggle to disable it.
+// =============================================================================
+adaptOn      = input.bool(true, "Adaptive Weighting ON", group="60 • Adaptive (heuristic)", tooltip="Master on/off. When OFF every indicator weight is fixed at 1.0.")
+wMin         = input.float(0.5, "Weight Min", step=0.1, group="60 • Adaptive (heuristic)", tooltip="Lower/upper bound for adaptive weights. Bounds prevent any single indicator from dominating.")
+wMax         = input.float(2.0, "Weight Max", step=0.1, group="60 • Adaptive (heuristic)")
+warmupTrades = input.int(30, "Warm-up Trades", minval=0, group="60 • Adaptive (heuristic)", tooltip="Weights stay at 1.0 until this many trades have closed. Small samples are meaningless.")
+
+var float[] wArr  = array.new_float(NIND, 1.0)   // current weights
+var float[] wWin  = array.new_float(NIND, 0.0)   // # trades the indicator correctly confirmed
+var float[] wTot  = array.new_float(NIND, 0.0)   // # trades the indicator agreed on
+
+// =============================================================================
+// MODULE 2 — MULTI-TIMEFRAME + MARKET REGIME FILTER
+// =============================================================================
+useHtf    = input.bool(true,  "Use HTF Trend Filter", group="20 • MTF / Regime", tooltip="Only allow longs when the higher timeframe trend is up (mirror for shorts).")
+htfMode   = input.string("Multiplier", "HTF Source", options=["Multiplier", "Explicit TF"], group="20 • MTF / Regime", tooltip="Derive the HTF as a multiple of the chart TF, or set it explicitly below.")
+htfMult   = input.int(4, "HTF Multiplier", minval=1, group="20 • MTF / Regime", tooltip="Higher TF = chart minutes * this. E.g. 15m chart * 4 = 60m.")
+htfExpl   = input.timeframe("D", "Explicit HTF", group="20 • MTF / Regime")
+htfFastLen= input.int(20, "HTF EMA Fast", minval=1, group="20 • MTF / Regime", inline="htfema")
+htfSlowLen= input.int(50, "HTF EMA Slow", minval=1, group="20 • MTF / Regime", inline="htfema")
+
+useMktFilter = input.bool(false, "Use Market Filter (ref symbol)", group="20 • MTF / Regime", tooltip="Only allow longs when a reference symbol (default SPY) is above its MA. Risk-on filter.")
+refSym       = input.symbol("AMEX:SPY", "Reference Symbol", group="20 • MTF / Regime")
+refMaLen     = input.int(50, "Reference MA Length", minval=1, group="20 • MTF / Regime")
+
+// Resolve HTF string
+chartMin = timeframe.in_seconds(timeframe.period) / 60.0
+htfTf = htfMode == "Explicit TF" ? htfExpl : (chartMin * htfMult >= 1440 ? str.tostring(int(math.round(chartMin * htfMult / 1440))) + "D" : str.tostring(int(math.round(chartMin * htfMult))))
+
+[htfEmaFast, htfEmaSlow, htfClose] = request.security(syminfo.tickerid, htfTf, [ta.ema(close, htfFastLen), ta.ema(close, htfSlowLen), close], lookahead=barmerge.lookahead_off)
+htfUp   = htfEmaFast > htfEmaSlow and htfClose > htfEmaSlow
+htfDown = htfEmaFast < htfEmaSlow and htfClose < htfEmaSlow
+
+[refClose, refMa] = request.security(refSym, timeframe.period, [close, ta.sma(close, refMaLen)], lookahead=barmerge.lookahead_off)
+mktUp = refClose > refMa
+
+// Regime classification
+isTrending = adxVal >= adxMin
+isCalm     = atrPct <= atrMaxPct
+regimeStr  = (isTrending ? "TREND" : "RANGE") + " / " + (isCalm ? "CALM" : "VOLATILE")
+
+// =============================================================================
+// MODULE 5 — WALK-FORWARD VALIDATION HARNESS
+// The script ONLY segments and reports IS vs OOS. It does NOT auto-optimize.
+// To optimize, change the IS dates and tune by hand; then verify on the
+// untouched OOS window. Optimization is manual/external by design.
+// =============================================================================
+wfMode   = input.string("Both",  "Active Window", options=["Optimize-IS", "Validate-OOS", "Both"], group="50 • Walk-Forward", tooltip="Which window may OPEN trades. Reporting always shows both IS and OOS.")
+isStart  = input.time(timestamp("2018-01-01 00:00"), "IS  Start", group="50 • Walk-Forward", inline="is")
+isEnd    = input.time(timestamp("2022-12-31 23:59"), "IS  End",   group="50 • Walk-Forward", inline="is")
+oosStart = input.time(timestamp("2023-01-01 00:00"), "OOS Start", group="50 • Walk-Forward", inline="oos")
+oosEnd   = input.time(timestamp("2026-12-31 23:59"), "OOS End",   group="50 • Walk-Forward", inline="oos")
+
+inIS  = time >= isStart  and time <= isEnd
+inOOS = time >= oosStart and time <= oosEnd
+inActiveWindow = wfMode == "Optimize-IS" ? inIS : wfMode == "Validate-OOS" ? inOOS : (inIS or inOOS)
+
+// =============================================================================
+// MODULE 4 — RISK & POSITION MANAGEMENT (inputs)
+// =============================================================================
+riskPct      = input.float(1.0, "Risk per Trade (%)", step=0.1, group="40 • Risk", tooltip="Position size is derived so that hitting the stop loses this % of equity. qty = equity*risk% / stopDistance.")
+maxTradesDay = input.int(3,  "Max Trades / Day", minval=1, group="40 • Risk", tooltip="Hard cap on new entries per calendar day.")
+cooldownBars = input.int(3,  "Cooldown Bars",  minval=0, group="40 • Risk", tooltip="Minimum bars between consecutive entries.")
+maxDdPct     = input.float(15.0, "Max Drawdown Halt (%)", step=0.5, group="40 • Risk", tooltip="Circuit breaker: block ALL new entries once equity drawdown from its peak exceeds this.")
+
+// Session / weekday filter
+useSession  = input.bool(false, "Use Session Filter", group="41 • Session", tooltip="Only trade within these hours (exchange-local timezone below). Off by default so it works on daily charts.")
+sessInput   = input.session("0930-1600", "Session", group="41 • Session")
+sessTz      = input.string("America/New_York", "Timezone", group="41 • Session")
+blockFirst  = input.int(5,  "Block first N min", minval=0, group="41 • Session", inline="blk", tooltip="Skip the opening N and closing N minutes (auction noise).")
+blockLast   = input.int(5,  "Block last N min",  minval=0, group="41 • Session", inline="blk")
+tMon = input.bool(true, "Mon", group="41 • Session", inline="wd")
+tTue = input.bool(true, "Tue", group="41 • Session", inline="wd")
+tWed = input.bool(true, "Wed", group="41 • Session", inline="wd")
+tThu = input.bool(true, "Thu", group="41 • Session", inline="wd")
+tFri = input.bool(true, "Fri", group="41 • Session", inline="wd")
+
+// Parse session "HHMM-HHMM" into minutes-of-day
+sParts  = str.split(sessInput, "-")
+sStr    = array.size(sParts) == 2 ? array.get(sParts, 0) : "0000"
+eStr    = array.size(sParts) == 2 ? array.get(sParts, 1) : "2359"
+startMd = int(str.tonumber(str.substring(sStr, 0, 2))) * 60 + int(str.tonumber(str.substring(sStr, 2, 4)))
+endMd   = int(str.tonumber(str.substring(eStr, 0, 2))) * 60 + int(str.tonumber(str.substring(eStr, 2, 4)))
+nowMd   = hour(time, sessTz) * 60 + minute(time, sessTz)
+dow     = dayofweek(time, sessTz)
+weekdayOk = (dow == dayofweek.monday and tMon) or (dow == dayofweek.tuesday and tTue) or (dow == dayofweek.wednesday and tWed) or (dow == dayofweek.thursday and tThu) or (dow == dayofweek.friday and tFri)
+inHours = nowMd >= startMd + blockFirst and nowMd < endMd - blockLast
+sessionOk = not useSession or (inHours and weekdayOk)
+
+// =============================================================================
+// MODULE 3 — ENTRY / EXIT / STOP LOGIC (inputs)
+// =============================================================================
+atrMult      = input.float(2.0, "ATR Stop Mult", step=0.1, group="30 • Exits", tooltip="Initial stop = entry -/+ ATR * this.")
+useStructStop= input.bool(false, "Use Structure Stop", group="30 • Exits", tooltip="Use the recent swing low/high instead of the ATR stop (whichever you enable).")
+swingLen     = input.int(10, "Swing Lookback", minval=1, group="30 • Exits")
+tp1R         = input.float(1.0, "TP1 (R)", step=0.1, group="30 • Exits", inline="tp1", tooltip="Take-profit 1 distance in R multiples, and the % of the position to close there.")
+tp1Pct       = input.float(50, "TP1 %", step=5, group="30 • Exits", inline="tp1")
+tp2R         = input.float(2.0, "TP2 (R)", step=0.1, group="30 • Exits", inline="tp2", tooltip="Take-profit 2 distance (R) and % closed. Any remainder becomes the trailing runner.")
+tp2Pct       = input.float(50, "TP2 %", step=5, group="30 • Exits", inline="tp2")
+useTrail     = input.bool(true, "Use Chandelier Trail", group="30 • Exits", tooltip="Trail the remaining runner with a chandelier (highest high - ATR*mult).")
+chMult       = input.float(3.0, "Chandelier ATR Mult", step=0.1, group="30 • Exits")
+chLen        = input.int(22, "Chandelier Lookback", minval=1, group="30 • Exits")
+useTimeExit  = input.bool(false, "Use Time Exit", group="30 • Exits", inline="te", tooltip="Force-close a trade after this many bars.")
+maxBarsTrade = input.int(50, "Max Bars in Trade", minval=1, group="30 • Exits", inline="te")
+
+// =============================================================================
+// CONFLUENCE SCORE (weighted)
+// =============================================================================
+var float netScore   = 0.0
+var float trendScore = 0.0
+var float momScore   = 0.0
+var float volaScore  = 0.0
+var float volScore   = 0.0
+netScore   := 0.0
+trendScore := 0.0
+momScore   := 0.0
+volaScore  := 0.0
+volScore   := 0.0
+for i = 0 to NIND - 1
+    contrib = array.get(sigArr, i) * array.get(wArr, i)
+    netScore += contrib
+    if i <= 2
+        trendScore += contrib
+    else if i <= 5
+        momScore += contrib
+    else if i == 6
+        volaScore += contrib
+    else
+        volScore += contrib
+
+// =============================================================================
+// GATES (regime, MTF, market, session, risk) and ENTRY conditions
+// =============================================================================
+// Drawdown circuit breaker
+var float peakEq = strategy.equity
+peakEq := math.max(peakEq, strategy.equity)
+ddPct = peakEq > 0 ? (peakEq - strategy.equity) / peakEq * 100.0 : 0.0
+ddOk  = ddPct <= maxDdPct
+
+// Per-day trade counter + cooldown
+var int tradesToday = 0
+var int lastEntryBar = -100000
+if ta.change(time("D")) != 0
+    tradesToday := 0
+cooldownOk = (bar_index - lastEntryBar) >= cooldownBars
+dayOk      = tradesToday < maxTradesDay
+
+// Common gate (chop / volatility / session / risk / window)
+gateCommon = isTrending and isCalm and sessionOk and ddOk and cooldownOk and dayOk and inActiveWindow and barstate.isconfirmed
+
+longGate  = allowLong  and gateCommon and trendScore > 0 and momScore > 0 and volScore > 0 and (not useHtf or htfUp)   and (not useMktFilter or mktUp)
+shortGate = allowShort and gateCommon and trendScore < 0 and momScore < 0 and volScore < 0 and (not useHtf or htfDown) and (not useMktFilter or true)
+
+longCond  = longGate  and ta.crossover(netScore, longThr)
+shortCond = shortGate and ta.crossunder(netScore, shortThr)
+
+// =============================================================================
+// POSITION SIZING + ENTRY
+// =============================================================================
+swingLow  = ta.lowest(low, swingLen)[1]
+swingHigh = ta.highest(high, swingLen)[1]
+
+longStopRaw  = useStructStop ? swingLow  : close - atrMult * atrVal
+shortStopRaw = useStructStop ? swingHigh : close + atrMult * atrVal
+longStopDist  = math.max(close - longStopRaw,  atrVal * 0.1)
+shortStopDist = math.max(shortStopRaw - close, atrVal * 0.1)
+
+qtyLong  = math.floor((strategy.equity * riskPct / 100.0) / longStopDist)
+qtyShort = math.floor((strategy.equity * riskPct / 100.0) / shortStopDist)
+
+// State stored at entry for logging / adaptive / exits
+var float gEntryPx   = na
+var float gStop      = na
+var float gTp1       = na
+var float gTp2       = na
+var float gRisk      = na
+var int   gBitmask   = 0
+var string gRegime   = ""
+var bool  gIsLong    = true
+var int   gEntryBar  = na
+var float gRunStop   = na   // trailing stop, monotonic
+
+// Build entry bitmask helper (bit i set if indicator agreed with the trade dir)
+buildMask(int dir) =>
+    int m = 0
+    for i = 0 to NIND - 1
+        if array.get(sigArr, i) == dir
+            m := m + int(math.pow(2, i))
+    m
+
+if longCond and qtyLong > 0
+    strategy.entry("L", strategy.long, qty=qtyLong)
+    gEntryPx := close
+    gStop    := longStopRaw
+    gRisk    := longStopDist
+    gTp1     := close + tp1R * longStopDist
+    gTp2     := close + tp2R * longStopDist
+    gBitmask := buildMask(1)
+    gRegime  := regimeStr
+    gIsLong  := true
+    gEntryBar:= bar_index
+    gRunStop := longStopRaw
+    tradesToday += 1
+    lastEntryBar := bar_index
+    label.new(bar_index, low, "L " + str.tostring(netScore, "#.#"), style=label.style_label_up, color=color.new(color.teal, 20), textcolor=color.white, size=size.tiny)
+    alert("ENTRY LONG " + syminfo.ticker + " @ " + str.tostring(close, format.mintick) + " SL " + str.tostring(gStop, format.mintick) + " TP1 " + str.tostring(gTp1, format.mintick) + " TP2 " + str.tostring(gTp2, format.mintick) + " score " + str.tostring(netScore, "#.#"), alert.freq_once_per_bar_close)
+
+if shortCond and qtyShort > 0
+    strategy.entry("S", strategy.short, qty=qtyShort)
+    gEntryPx := close
+    gStop    := shortStopRaw
+    gRisk    := shortStopDist
+    gTp1     := close - tp1R * shortStopDist
+    gTp2     := close - tp2R * shortStopDist
+    gBitmask := buildMask(-1)
+    gRegime  := regimeStr
+    gIsLong  := false
+    gEntryBar:= bar_index
+    gRunStop := shortStopRaw
+    tradesToday += 1
+    lastEntryBar := bar_index
+    label.new(bar_index, high, "S " + str.tostring(netScore, "#.#"), style=label.style_label_down, color=color.new(color.maroon, 20), textcolor=color.white, size=size.tiny)
+    alert("ENTRY SHORT " + syminfo.ticker + " @ " + str.tostring(close, format.mintick) + " SL " + str.tostring(gStop, format.mintick) + " TP1 " + str.tostring(gTp1, format.mintick) + " TP2 " + str.tostring(gTp2, format.mintick) + " score " + str.tostring(netScore, "#.#"), alert.freq_once_per_bar_close)
+
+// =============================================================================
+// EXITS — partial TPs + (trailing) stop + optional time exit
+// =============================================================================
+// Update the trailing stop for the runner (monotonic).
+if strategy.position_size > 0
+    chLong = ta.highest(high, chLen) - chMult * atrVal
+    if useTrail
+        gRunStop := math.max(nz(gRunStop, gStop), chLong)
+    else
+        gRunStop := gStop
+    strategy.exit("L-TP1", from_entry="L", qty_percent=tp1Pct, limit=gTp1)
+    strategy.exit("L-TP2", from_entry="L", qty_percent=tp2Pct, limit=gTp2)
+    strategy.exit("L-SL",  from_entry="L", stop=gRunStop)
+    if useTimeExit and (bar_index - gEntryBar) >= maxBarsTrade
+        strategy.close("L", comment="Time")
+
+if strategy.position_size < 0
+    chShort = ta.lowest(low, chLen) + chMult * atrVal
+    if useTrail
+        gRunStop := math.min(nz(gRunStop, gStop), chShort)
+    else
+        gRunStop := gStop
+    strategy.exit("S-TP1", from_entry="S", qty_percent=tp1Pct, limit=gTp1)
+    strategy.exit("S-TP2", from_entry="S", qty_percent=tp2Pct, limit=gTp2)
+    strategy.exit("S-SL",  from_entry="S", stop=gRunStop)
+    if useTimeExit and (bar_index - gEntryBar) >= maxBarsTrade
+        strategy.close("S", comment="Time")
+
+// =============================================================================
+// TRADE-CLOSE HOOK: feed the adaptive module + the external trade log
+// (uses strategy.closedtrades only — never open trades → no lookahead)
+// =============================================================================
+// Global per-trade arrays for the IS/OOS stats and the export log.
+var int[]    aEntryT  = array.new_int(0)
+var int[]    aExitT   = array.new_int(0)
+var int[]    aDir     = array.new_int(0)
+var float[]  aEntryPx = array.new_float(0)
+var float[]  aExitPx  = array.new_float(0)
+var float[]  aStop    = array.new_float(0)
+var int[]    aMask    = array.new_int(0)
+var float[]  aPnL     = array.new_float(0)
+var float[]  aR       = array.new_float(0)
+var string[] aRegime  = array.new_string(0)
+
+var int lastClosed = 0
+if strategy.closedtrades > lastClosed
+    for idx = lastClosed to strategy.closedtrades - 1
+        p   = strategy.closedtrades.profit(idx)
+        rMult = nz(gRisk) > 0 ? p / (gRisk * math.abs(strategy.closedtrades.size(idx))) : 0.0
+        // --- store the trade record for the export log & IS/OOS stats
+        array.push(aEntryT,  strategy.closedtrades.entry_time(idx))
+        array.push(aExitT,   strategy.closedtrades.exit_time(idx))
+        array.push(aDir,     gIsLong ? 1 : -1)
+        array.push(aEntryPx, strategy.closedtrades.entry_price(idx))
+        array.push(aExitPx,  strategy.closedtrades.exit_price(idx))
+        array.push(aStop,    gStop)
+        array.push(aMask,    gBitmask)
+        array.push(aPnL,     p)
+        array.push(aR,       rMult)
+        array.push(aRegime,  gRegime)
+        // --- adaptive update: each indicator that AGREED gets a confirmation
+        won = p > 0
+        for i = 0 to NIND - 1
+            bitSet = (math.floor(gBitmask / math.pow(2, i)) % 2) >= 1
+            if bitSet
+                array.set(wTot, i, array.get(wTot, i) + 1)
+                if won
+                    array.set(wWin, i, array.get(wWin, i) + 1)
+    lastClosed := strategy.closedtrades
+
+// Recompute weights from rolling indicator win-rates (post warm-up only).
+if adaptOn and strategy.closedtrades >= warmupTrades
+    for i = 0 to NIND - 1
+        tot = array.get(wTot, i)
+        wr  = tot > 0 ? array.get(wWin, i) / tot : 0.5
+        // map win-rate 0..1 → [wMin, wMax]
+        array.set(wArr, i, wMin + (wMax - wMin) * wr)
+else if not adaptOn
+    for i = 0 to NIND - 1
+        array.set(wArr, i, 1.0)
+
+// =============================================================================
+// MODULE 8 — VISUALIZATION (lines for live trade)
+// =============================================================================
+plotStop = strategy.position_size != 0 ? gRunStop : na
+plotTp1  = strategy.position_size != 0 ? gTp1 : na
+plotTp2  = strategy.position_size != 0 ? gTp2 : na
+plot(plotStop, "Stop", color=color.red,    style=plot.style_linebr, linewidth=2)
+plot(plotTp1,  "TP1",  color=color.lime,   style=plot.style_linebr, linewidth=1)
+plot(plotTp2,  "TP2",  color=color.green,  style=plot.style_linebr, linewidth=1)
+plotshape(longCond,  title="Long",  style=shape.triangleup,   location=location.belowbar, color=color.teal,   size=size.tiny)
+plotshape(shortCond, title="Short", style=shape.triangledown, location=location.abovebar, color=color.maroon, size=size.tiny)
+
+// =============================================================================
+// MODULE 7/8 — TABLES: performance (IS/OOS), confluence breakdown, weights, log
+// =============================================================================
+showPerf = input.bool(true, "Show Performance Table", group="80 • Display")
+showConf = input.bool(true, "Show Confluence/Weights Table", group="80 • Display")
+showLog  = input.bool(true, "Show Trade Log Table", group="80 • Display")
+logRows  = input.int(12, "Trade Log Rows", minval=1, maxval=40, group="80 • Display", tooltip="How many of the most recent closed trades to print for manual export to your Python/ML pipeline.")
+
+// Window stats: returns [n, netProfit, profitFactor, winRate%, maxDD, expectancyR, sharpeLike]
+computeWindowStats(aT, aP, aRm, sT, eT) =>
+    int n = 0
+    float sp = 0.0
+    float gw = 0.0
+    float gl = 0.0
+    float w = 0.0
+    float cum = 0.0
+    float peak = 0.0
+    float mdd = 0.0
+    rTmp = array.new_float(0)
+    for i = 0 to array.size(aT) - 1
+        et = array.get(aT, i)
+        if et >= sT and et <= eT
+            p = array.get(aP, i)
+            n += 1
+            sp += p
+            if p > 0
+                w += 1
+                gw += p
+            else
+                gl += p
+            cum += p
+            peak := math.max(peak, cum)
+            mdd  := math.max(mdd, peak - cum)
+            array.push(rTmp, array.get(aRm, i))
+    pf  = gl != 0 ? gw / math.abs(gl) : (gw > 0 ? 999.0 : 0.0)
+    wr  = n > 0 ? w / n * 100.0 : 0.0
+    exp = array.size(rTmp) > 0 ? array.avg(rTmp) : 0.0
+    sd  = array.size(rTmp) > 1 ? array.stdev(rTmp) : 0.0
+    shp = sd > 0 ? exp / sd : 0.0
+    [n, sp, pf, wr, mdd, exp, shp]
+
+var table perfT = table.new(position.top_right, 4, 9, border_width=1, frame_color=color.gray, frame_width=1)
+var table confT = table.new(position.top_left, 4, 13, border_width=1, frame_color=color.gray, frame_width=1)
+var table logT  = table.new(position.bottom_left, 9, 41, border_width=1, frame_color=color.gray, frame_width=1)
+
+cellHdr(t, c, r, s) => table.cell(t, c, r, s, text_color=color.white, bgcolor=color.new(color.blue, 40), text_size=size.tiny)
+cell(t, c, r, s) => table.cell(t, c, r, s, text_color=color.white, text_size=size.tiny)
+
+if barstate.islast
+    // ---------- PERFORMANCE TABLE (IS vs OOS) ----------
+    if showPerf
+        [nIS, spIS, pfIS, wrIS, ddIS, exIS, shIS] = computeWindowStats(aEntryT, aPnL, aR, isStart, isEnd)
+        [nOO, spOO, pfOO, wrOO, ddOO, exOO, shOO] = computeWindowStats(aEntryT, aPnL, aR, oosStart, oosEnd)
+        cellHdr(perfT, 0, 0, "Metric")
+        cellHdr(perfT, 1, 0, "IS")
+        cellHdr(perfT, 2, 0, "OOS")
+        cellHdr(perfT, 3, 0, "ALL")
+        cell(perfT, 0, 1, "Net Profit $")
+        cell(perfT, 1, 1, str.tostring(spIS, "#"))
+        cell(perfT, 2, 1, str.tostring(spOO, "#"))
+        cell(perfT, 3, 1, str.tostring(strategy.netprofit, "#"))
+        cell(perfT, 0, 2, "Profit Factor")
+        cell(perfT, 1, 2, str.tostring(pfIS, "#.##"))
+        cell(perfT, 2, 2, str.tostring(pfOO, "#.##"))
+        cell(perfT, 3, 2, str.tostring(strategy.grossloss != 0 ? strategy.grossprofit / strategy.grossloss : 0, "#.##"))
+        cell(perfT, 0, 3, "Win Rate %")
+        cell(perfT, 1, 3, str.tostring(wrIS, "#.#"))
+        cell(perfT, 2, 3, str.tostring(wrOO, "#.#"))
+        cell(perfT, 3, 3, str.tostring(strategy.closedtrades > 0 ? strategy.wintrades / strategy.closedtrades * 100 : 0, "#.#"))
+        cell(perfT, 0, 4, "Max DD $ (closed)")
+        cell(perfT, 1, 4, str.tostring(ddIS, "#"))
+        cell(perfT, 2, 4, str.tostring(ddOO, "#"))
+        cell(perfT, 3, 4, str.tostring(strategy.max_drawdown, "#"))
+        cell(perfT, 0, 5, "# Trades")
+        cell(perfT, 1, 5, str.tostring(nIS))
+        cell(perfT, 2, 5, str.tostring(nOO))
+        cell(perfT, 3, 5, str.tostring(strategy.closedtrades))
+        cell(perfT, 0, 6, "Avg R / Expectancy")
+        cell(perfT, 1, 6, str.tostring(exIS, "#.##"))
+        cell(perfT, 2, 6, str.tostring(exOO, "#.##"))
+        cell(perfT, 3, 6, "-")
+        cell(perfT, 0, 7, "Sharpe-like")
+        cell(perfT, 1, 7, str.tostring(shIS, "#.##"))
+        cell(perfT, 2, 7, str.tostring(shOO, "#.##"))
+        cell(perfT, 3, 7, "-")
+        cell(perfT, 0, 8, "Regime now")
+        table.cell(perfT, 1, 8, regimeStr, text_color=color.yellow, text_size=size.tiny)
+        cell(perfT, 2, 8, "Score")
+        cell(perfT, 3, 8, str.tostring(netScore, "#.#"))
+
+    // ---------- CONFLUENCE BREAKDOWN + ADAPTIVE WEIGHTS ----------
+    if showConf
+        cellHdr(confT, 0, 0, "Indicator")
+        cellHdr(confT, 1, 0, "Sig")
+        cellHdr(confT, 2, 0, "Weight")
+        cellHdr(confT, 3, 0, "Contrib")
+        for i = 0 to NIND - 1
+            sg = array.get(sigArr, i)
+            wv = array.get(wArr, i)
+            col = sg > 0 ? color.new(color.green, 60) : sg < 0 ? color.new(color.red, 60) : color.new(color.gray, 70)
+            table.cell(confT, 0, i + 1, array.get(indNames, i), text_color=color.white, text_size=size.tiny, bgcolor=col)
+            cell(confT, 1, i + 1, str.tostring(sg))
+            cell(confT, 2, i + 1, str.tostring(wv, "#.##"))
+            cell(confT, 3, i + 1, str.tostring(sg * wv, "#.##"))
+        cellHdr(confT, 0, 11, "Category")
+        cellHdr(confT, 1, 11, "T/M")
+        cellHdr(confT, 2, 11, "Vol/Vlm")
+        cellHdr(confT, 3, 11, "NET")
+        cell(confT, 0, 12, "Scores")
+        cell(confT, 1, 12, str.tostring(trendScore, "#.#") + "/" + str.tostring(momScore, "#.#"))
+        cell(confT, 2, 12, str.tostring(volaScore, "#.#") + "/" + str.tostring(volScore, "#.#"))
+        table.cell(confT, 3, 12, str.tostring(netScore, "#.#"), text_color=color.yellow, text_size=size.tiny)
+
+    // ---------- TRADE LOG (compact, parseable for Python/ML export) ----------
+    if showLog
+        n = array.size(aEntryT)
+        rows = math.min(logRows, n)
+        table.set_position(logT, position.bottom_left)
+        // header row 0
+        cellHdr(logT, 0, 0, "EntryT")
+        cellHdr(logT, 1, 0, "ExitT")
+        cellHdr(logT, 2, 0, "Dir")
+        cellHdr(logT, 3, 0, "Entry")
+        cellHdr(logT, 4, 0, "Exit")
+        cellHdr(logT, 5, 0, "Stop")
+        cellHdr(logT, 6, 0, "Mask")
+        cellHdr(logT, 7, 0, "PnL/R")
+        cellHdr(logT, 8, 0, "Regime")
+        for r = 0 to rows - 1
+            idx = n - rows + r
+            rr = r + 1
+            table.cell(logT, 0, rr, str.format_time(array.get(aEntryT, idx), "yy-MM-dd HH:mm", sessTz), text_color=color.white, text_size=size.tiny)
+            table.cell(logT, 1, rr, str.format_time(array.get(aExitT, idx),  "yy-MM-dd HH:mm", sessTz), text_color=color.white, text_size=size.tiny)
+            cell(logT, 2, rr, array.get(aDir, idx) == 1 ? "L" : "S")
+            cell(logT, 3, rr, str.tostring(array.get(aEntryPx, idx), format.mintick))
+            cell(logT, 4, rr, str.tostring(array.get(aExitPx, idx),  format.mintick))
+            cell(logT, 5, rr, str.tostring(array.get(aStop, idx),    format.mintick))
+            cell(logT, 6, rr, str.tostring(array.get(aMask, idx)))
+            cell(logT, 7, rr, str.tostring(array.get(aPnL, idx), "#") + " / " + str.tostring(array.get(aR, idx), "#.##"))
+            cell(logT, 8, rr, array.get(aRegime, idx))
+
+// =============================================================================
+// MODULE 9 — ALERTS (static alertconditions; dynamic alerts fire in entry block)
+// =============================================================================
+alertcondition(longCond,  title="Confluence LONG entry",  message="Confluence LONG {{ticker}} @ {{close}}")
+alertcondition(shortCond, title="Confluence SHORT entry", message="Confluence SHORT {{ticker}} @ {{close}}")
+alertcondition(strategy.position_size != 0 and strategy.position_size[1] == 0, title="Any entry", message="Position opened on {{ticker}}")
+alertcondition(strategy.position_size == 0 and strategy.position_size[1] != 0, title="Any exit",  message="Position closed on {{ticker}}")
